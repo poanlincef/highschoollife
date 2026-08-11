@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#eaf4ff">
+<title>HighSchoolLife - 高中人生產生器</title>
+<meta name="description" content="18 次段考，三年的時間分配練習。課業、人際、靈命、金錢，每一次選擇都算數。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect x=%224%22 y=%226%22 width=%2224%22 height=%2220%22 rx=%222%22 fill=%22%23ffb100%22/%3E%3Cline x1=%228%22 y1=%2212%22 x2=%2224%22 y2=%2212%22 stroke=%22%23ffffff%22 stroke-width=%221.5%22/%3E%3Cline x1=%228%22 y1=%2217%22 x2=%2220%22 y2=%2217%22 stroke=%22%23ffffff%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eaf4ff; --panel:#ffffff; --panel2:#f2f7ff; --edge:#d3e3f7;
+  --ink:#223047; --dim:#72839f; --amber:#ffb100; --coral:#ff6b5f; --mint:#12b886; --sky:#2f9bf0;
+  --banner1:#3fa9ff; --banner2:#2f7de0;
+  --disp:'Klee One',var(--sans); --sans:'Noto Sans TC',-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;
+  background-image:radial-gradient(ellipse 120% 55% at 50% -8%,#fff1c288 0%,transparent 62%);background-attachment:fixed}
+#app{max-width:560px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+/* ---------- 課表列 board ---------- */
+#board{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--banner1),var(--banner2));
+  border-bottom:none;padding:10px 14px 8px;box-shadow:0 6px 18px #2f7de03d;color:#fff}
+#bd-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#bd-name{font-family:var(--disp);font-weight:600;font-size:17px;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+#bd-name small{color:#ffffffb0;font-weight:400;font-size:12px;margin-left:6px;font-family:var(--sans)}
+#bd-tag{color:#ffe27a;font-size:12px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
+#examstrip{display:grid;grid-template-columns:repeat(18,1fr);gap:2px;margin-top:8px}
+.exbox{height:9px;border-radius:2px;background:#ffffff33;border:1px solid #ffffff40}
+.exbox.done{background:#ffe27a;border-color:#ffe27a}
+.exbox.now{background:#fff;border-color:#fff}
+#bd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.bd-cell{background:#ffffff22;border:1px solid #ffffff33;border-radius:6px;padding:4px 6px 3px;text-align:center}
+.bd-cell b{display:block;font-family:var(--mono);font-size:15px;font-weight:700;color:#fff;line-height:1.2}
+.bd-cell span{font-size:10px;color:#ffffffb0;letter-spacing:.1em}
+#nrg{margin-top:7px;display:flex;align-items:center;gap:8px;font-size:11px;color:#ffffffcc;letter-spacing:.1em}
+#nrg .bar{flex:1;height:6px;background:#ffffff2e;border-radius:3px;overflow:hidden;border:1px solid #ffffff40}
+#nrg .bar i{display:block;height:100%;background:linear-gradient(90deg,#ff8a80,#ffe27a,#7CFFC4);border-radius:3px}
+/* ---------- 主紀錄 ---------- */
+#log{flex:1;padding:14px 14px 20px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:12px 14px;
+  animation:pop .25s ease;overflow-wrap:anywhere;box-shadow:0 2px 10px #2f7de014}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card h4{font-size:12px;letter-spacing:.15em;color:var(--dim);font-weight:700;margin-bottom:6px;
+  display:flex;align-items:center;gap:8px}
+.card h4::before{content:'';width:8px;height:8px;background:var(--sky);border-radius:2px;transform:rotate(45deg);flex:none}
+.card.gold h4::before{background:var(--amber)} .card.bad h4::before{background:var(--coral)}
+.card.good h4::before{background:var(--mint)} .card.info h4::before{background:var(--sky)}
+.card p{font-size:14px} .card p+p{margin-top:4px}
+.up{color:var(--mint);font-weight:700}.dn{color:var(--coral);font-weight:700}.hl{color:#e6960a;font-weight:700}
+.divider{text-align:center;color:var(--dim);font-size:11px;letter-spacing:.35em;padding:6px 0 0}
+.divider::before,.divider::after{content:'───'}
+/* ---------- 操作區 ---------- */
+#act{position:sticky;bottom:0;z-index:20;background:linear-gradient(#eaf4ffee,#eaf4ff);border-top:2px solid var(--edge);
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom));backdrop-filter:blur(6px);
+  max-height:76vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#act .title{font-size:12px;letter-spacing:.15em;color:var(--dim);margin-bottom:8px;font-weight:700}
+.btn{display:block;width:100%;background:var(--panel);border:1px solid var(--edge);color:var(--ink);
+  font-family:var(--sans);font-size:15px;font-weight:700;border-radius:10px;padding:11px 14px;margin-top:8px;
+  cursor:pointer;text-align:left;transition:.15s;box-shadow:0 1px 4px #2f7de00f}
+.btn:active{transform:scale(.98)} .btn:hover{border-color:var(--amber)}
+.btn small{display:block;font-weight:400;font-size:12px;color:var(--dim);margin-top:2px}
+.btn.main{background:linear-gradient(135deg,#ffd257,var(--amber));border-color:#f0a400;text-align:center;color:#2b2000}
+.btn.choice{text-align:center;background:var(--panel)}
+.btn.warn{border-color:#ffb7af;background:#fff4f3}
+/* 分配面板 */
+.alloc-row{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--edge);
+  border-radius:8px;padding:7px 10px;margin-top:6px}
+.alloc-row .nm{width:64px;font-size:13.5px;font-weight:700;flex:none}
+.alloc-row .nm small{display:block;font-weight:400;color:var(--dim);font-size:10.5px}
+.alloc-row .stepbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--edge);background:#fff;
+  color:var(--ink);font-size:17px;font-weight:700;flex:none;cursor:pointer;line-height:1}
+.alloc-row .stepbtn:disabled{opacity:.3}
+.alloc-row .val{width:22px;text-align:center;font-family:var(--mono);font-weight:700;color:#e6960a}
+.alloc-row.locked{opacity:.5}
+.wk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.wk-item{background:var(--panel2);border:1px solid var(--edge);border-radius:8px;padding:8px 9px 7px}
+.wk-item.locked{opacity:.5}
+.wk-item .nm{font-size:12.5px;font-weight:700;line-height:1.3}
+.wk-item .nm small{display:block;font-weight:400;color:var(--dim);font-size:10px;margin-top:2px;line-height:1.3}
+.wk-item .ctr{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
+.wk-item .stepbtn{width:26px;height:26px;border-radius:6px;border:1px solid var(--edge);background:#fff;
+  color:var(--ink);font-size:14px;font-weight:700;cursor:pointer;line-height:1}
+.wk-item .stepbtn:disabled{opacity:.3}
+.wk-item .val{font-family:var(--mono);font-weight:700;color:#e6960a;font-size:13px}
+.pt-slider{width:100%;margin-top:9px;accent-color:var(--amber);height:20px;cursor:pointer;display:block}
+.pt-slider:disabled{opacity:.35;cursor:default}
+.pt-val{text-align:right;font-family:var(--mono);font-weight:700;color:#e6960a;font-size:13px;margin-top:2px}
+.poolline{font-family:var(--mono);font-size:14px;color:#e6960a;margin-bottom:8px;text-align:center}
+.diceRow{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:10px}
+.die2{width:42px;height:42px;border-radius:9px;background:#fff;color:var(--ink);font-family:var(--mono);border:2px solid var(--edge);
+  font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 var(--edge)}
+.diceEq{color:var(--dim);font-family:var(--mono);font-size:14px}
+.diceTotal{color:#e6960a;font-family:var(--mono);font-size:16px;font-weight:700}
+/* 開場 */
+#start{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;
+  background-image:radial-gradient(ellipse 120% 45% at 50% -5%,#ffe27a99,transparent 60%)}
+#start .wrap{max-width:560px;margin:0 auto;padding:40px 22px 60px}
+#start h1{font-family:var(--disp);font-size:32px;font-weight:600;letter-spacing:.03em;line-height:1.3;margin-top:14px}
+#start h1 em{font-style:normal;color:#e6960a}
+#start .sub{color:var(--dim);margin:10px 0 26px;font-size:13.5px;letter-spacing:.03em}
+.field{margin-top:18px}
+.field label{display:block;font-size:12px;letter-spacing:.2em;color:var(--dim);font-weight:700;margin-bottom:8px}
+.field input{width:100%;background:var(--panel);border:1px solid var(--edge);border-radius:10px;color:var(--ink);
+  font-family:var(--sans);font-size:16px;padding:11px 14px;outline:none}
+.field input:focus{border-color:var(--amber)}
+.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.seg.five{grid-template-columns:repeat(2,1fr)}
+.seg button{background:var(--panel);border:1px solid var(--edge);border-radius:10px;color:var(--dim);
+  font-family:var(--sans);font-size:13.5px;font-weight:700;padding:11px 6px;cursor:pointer;text-align:center}
+.seg button small{display:block;font-weight:400;font-size:11px;margin-top:2px}
+.seg button.on{background:#fff6df;color:#e6960a;border-color:var(--amber)}
+.badge{display:inline-block;width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#ffe27a,var(--amber));border:2px solid #f0a400}
+#ver-badge{position:fixed;top:6px;right:8px;font-size:10px;letter-spacing:1px;color:var(--dim);opacity:.55;font-family:monospace;z-index:50;pointer-events:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="start">
+  <div class="wrap">
+    <div class="badge" style="display:flex;align-items:center;justify-content:center;font-size:26px">🎒</div>
+    <h1>SchoolLife<br><em>高中人生產生器</em></h1>
+    <div id="ver-badge">v1.0</div>
+    <p class="sub">三年、18 次段考 → 課業・人際・靈命・金錢，時間永遠不夠用，怎麼分配是你的選擇。</p>
+    <div class="field"><label>你的名字</label><input id="in-name" maxlength="10" placeholder="例如：陳小美" value=""></div>
+    <div class="field"><label>學制</label>
+      <div class="seg" id="seg-track">
+        <button data-v="gen" class="on">普通高中<small>學測 / 分科</small></button>
+        <button data-v="voc">高職<small>統測 / 證照 / 實習</small></button>
+      </div></div>
+    <div class="field"><label>你比較像哪一種人？（只影響起始傾向，之後都能自己選）</label>
+      <div class="seg five" id="seg-per">
+        <button data-v="study" class="on">讀書型<small>課業起始較高</small></button>
+        <button data-v="social">社交型<small>人際起始較高</small></button>
+        <button data-v="club">社團型<small>社團熱情高</small></button>
+        <button data-v="job">打工型<small>一開始就有工讀</small></button>
+        <button data-v="faith">信仰型<small>靈命起始較高</small></button>
+      </div></div>
+    <button class="btn main" style="margin-top:28px" id="btn-start">開始高一上學期 ▸</button>
+  </div>
+</div>
+<div id="app">
+  <header id="board" style="display:none">
+    <div id="bd-top"><div id="bd-name"></div><div id="bd-tag"></div></div>
+    <div id="examstrip"></div>
+    <div id="bd-grid">
+      <div class="bd-cell"><b id="bd-study">0</b><span>課業</span></div>
+      <div class="bd-cell"><b id="bd-social">0</b><span>人際</span></div>
+      <div class="bd-cell"><b id="bd-faith">0</b><span>靈命</span></div>
+      <div class="bd-cell"><b id="bd-money">0</b><span>金錢</span></div>
+    </div>
+    <div id="nrg"><span>精力</span><div class="bar"><i id="nrg-bar" style="width:70%"></i></div><span id="nrg-val">70</span></div>
+  </header>
+  <main id="log"></main>
+  <footer id="act" style="display:none"></footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function scrollBottom(){ try{ requestAnimationFrame(()=>window.scrollTo(0,document.body.scrollHeight)); }catch(e){} }
+/* ===== 種子化 RNG ===== */
+let SEED = Math.random().toString(36).slice(2,10);
+let _s=0;
+function seedInit(str){ _s=1779033703; for(let i=0;i<str.length;i++){ _s=Math.imul(_s^str.charCodeAt(i),3432918353); _s=_s<<13|_s>>>19; } }
+function R(){ _s|=0; _s=_s+0x6D2B79F5|0; let t=Math.imul(_s^_s>>>15,1|_s); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
+const ri=(a,b)=>a+Math.floor(R()*(b-a+1));
+const pick=a=>a[Math.floor(R()*a.length)];
+const chance=p=>R()*100<p;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const N0=sd=>(R()+R()+R()+R()-2)/2*sd*2;
+
+/* ===== 靜態資料 ===== */
+const TRACKN={gen:'普通高中',voc:'高職'};
+const PERN={study:'讀書型',social:'社交型',club:'社團型',job:'打工型',faith:'信仰型'};
+const SEMN=['高一上','高一下','高二上','高二下','高三上','高三下'];
+
+function newState(name,track,per){
+  const base={study:45,social:40,faith:32,money:700,energy:75};
+  if(per==='study')base.study+=18;
+  if(per==='social')base.social+=18;
+  if(per==='club')base.social+=10;
+  if(per==='job')base.money+=700;
+  if(per==='faith')base.faith+=22;
+  return {
+    name,track,per,examIndex:0,
+    study:base.study,social:base.social,faith:base.faith,money:base.money,energy:base.energy,
+    hasClub:false,clubName:null,hasJob:false,jobName:null,inChurch:true,
+    classType:null, /* 自然組/社會組 or 高職方向 */
+    scores:[], lowEnergyCount:0, lowMoneyCount:0,
+    reportHelp:0, reportSlack:0, danceCaptain:false, inRelationship:false,
+    cumJobPoints:0, skipCount:0, licenseCount:0, internshipGood:0, churchFull:true, everSkippedChurch:false,
+    usedPoolIds:[], traits:{}, log:[], semAverages:[], cheapCount:0, coupleFightCount:0, confessAskedGrade:0,
+    clubDeclineCount:0, jobDeclineCount:0, summerBurnoutDone:false, keptBusyIntoHighSchool:false,
+    enteringHigh3BreakupDone:false, sickCount:0, sickLeaveCount:0, examPath:null, interviewDone:false
+  };
+}
+let S;
+
+/* ===== 卡片與畫面更新 ===== */
+function card(tone,title,html){
+  const el=document.createElement('div');
+  el.className='card'+(tone?' '+tone:'');
+  el.innerHTML=`<h4>${title}</h4><p>${html}</p>`;
+  $('log').appendChild(el);
+  scrollBottom();
+}
+function divider(t){
+  const el=document.createElement('div'); el.className='divider'; el.textContent=t;
+  $('log').appendChild(el); scrollBottom();
+}
+function ordinalCN(n){ return ['第一次','第二次','第三次'][n-1]||''; }
+function examLabel(){
+  const semIdx=Math.min(6,Math.max(1,Math.ceil(S.examIndex/3)));
+  const ord=((S.examIndex-1)%3)+1;
+  return SEMN[semIdx-1]+' '+ordinalCN(ord)+'段考';
+}
+function board(){
+  $('bd-study').textContent=Math.round(S.study);
+  $('bd-social').textContent=Math.round(S.social);
+  $('bd-faith').textContent=Math.round(S.faith);
+  $('bd-money').textContent='$'+Math.round(S.money);
+  $('nrg-val').textContent=Math.round(S.energy);
+  $('nrg-bar').style.width=clamp(S.energy,0,100)+'%';
+  const strip=$('examstrip'); strip.innerHTML='';
+  for(let i=1;i<=18;i++){
+    const d=document.createElement('div');
+    d.className='exbox'+(i<S.examIndex?' done':i===S.examIndex?' now':'');
+    strip.appendChild(d);
+  }
+  $('bd-tag').textContent=(S.examIndex? examLabel() : '');
+}
+function act(html){ $('act').innerHTML=html; $('act').style.display=''; scrollBottom(); }
+/* 選擇卡：options=[{t,s,f,main,warn}] */
+function choose(title,options){
+  let html=`<div class="title">${title}</div>`;
+  options.forEach((o,i)=>{
+    html+=`<button class="btn choice" data-i="${i}">${o.t}</button>`;
+  });
+  act(html);
+  Array.from($('act').querySelectorAll('button')).forEach((b,i)=>{
+    b.onclick=()=>{ $('act').style.display='none'; options[i].f(); };
+  });
+}
+
+/* ===== 效果套用 ===== */
+function applyEff(eff){
+  if(!eff)return;
+  if(eff.study)S.study=clamp(S.study+eff.study,0,100);
+  if(eff.social)S.social=clamp(S.social+eff.social,0,100);
+  if(eff.faith)S.faith=clamp(S.faith+eff.faith,0,100);
+  if(eff.money)S.money=Math.max(0,S.money+eff.money);
+  if(eff.energy)S.energy=clamp(S.energy+eff.energy,0,100);
+}
+const TRAIT_ICON={bookworm:'📚',popular:'❄️',faithful:'✝️',brokewallet:'👛',workhard:'💪',
+  burntout:'🕯️',teammate:'🤝',freeloader:'💣',danceleader:'💃',inlove:'🐶',
+  internstar:'🔧',licensepro:'📜',darkhorse:'🐎',perfectattend:'🏅',loner:'🌫️',cheap:'🪙',single:'👑',richking:'💰',daiyu:'🥀'};
+function traitCard(key,name,desc){
+  if(S.traits[key])return;
+  const icon=TRAIT_ICON[key]||'⭐';
+  S.traits[key]={name,desc,icon};
+  card('gold','隱藏特質解鎖：'+icon+' '+name,desc);
+}
+
+/* ===== 開學 / 學期固定事件 ===== */
+function clubAskStep(next){
+  card('info','社團博覽會','校園裡在辦社團博覽會/招生，要不要加入一個社團？');
+  choose('要加入社團嗎？',[
+    {t:'加入社團',main:true,f:()=>{
+      S.hasClub=true; S.clubName=S.track==='voc'?pick(['技藝研究社','熱舞社','餐飲社','機車研究社']):pick(['熱音社','籃球隊','美術社','熱舞社','管樂社']);
+      card('good','社團加入',`加入了 <b class="hl">${S.clubName}</b>。以後每次段考可以把時間分配到社團經營上。`); next(); }},
+    {t:'先觀望，不加入',f:()=>{ S.clubDeclineCount++; card('info','社團博覽會','決定這學期先不加入任何社團。'); next(); }}
+  ]);
+}
+function jobAskStep(next){
+  card('info','打工機會','附近店家又在徵工讀生，要不要去試試？');
+  choose('要開始打工嗎？',[
+    {t:'去打工',main:true,f:()=>{
+      S.hasJob=true; S.jobName=pick(['手搖飲店','超商','早餐店','速食店','家教']);
+      card('good','開始打工',`成為 <b class="hl">${S.jobName}</b> 的工讀生。以後段考前可以分配時間去打工賺錢。`); next(); }},
+    {t:'先不要，怕影響課業',f:()=>{ S.jobDeclineCount++; card('info','打工機會','想了想，還是先不要，怕分心。'); next(); }}
+  ]);
+}
+function runSteps(steps,cont){
+  if(!steps.length){ cont(); return; }
+  steps[0](()=>runSteps(steps.slice(1),cont));
+}
+function semesterIntro(cont){
+  const semIdx=Math.ceil(S.examIndex/3); // 1..6
+  if(semIdx>=1 && semIdx<=6) divider(SEMN[semIdx-1]);
+  const steps=[];
+  if(semIdx<=4){ /* 高三不再詢問加入社團/打工，避免剛退出又被問的怪異感 */
+    if(!S.hasClub && S.clubDeclineCount<2) steps.push(clubAskStep);
+    if(!S.hasJob && S.jobDeclineCount<2) steps.push(jobAskStep);
+  }
+  steps.push((next)=>semesterFixedContent(semIdx,next));
+  runSteps(steps,cont);
+}
+function semesterFixedContent(semIdx,cont){
+  if(semIdx===1){
+    card('info','開學日',`${S.name}走進教室，新的三年正式開始。`);
+    cont();
+  } else if(semIdx===2){
+    choose('班聯會 / 幹部改選要不要參一咖？',[
+      {t:'參選幹部',s:'人際 +、精力 -，需要多花心力辦事',main:true,f:()=>{ applyEff({social:6,energy:-6}); card('good','幹部改選',`當選了班上幹部，人際 <b class="up">+6</b>，但要多花心力辦活動，精力 <b class="dn">-6</b>。`); board(); cont(); }},
+      {t:'投票就好，不參選',f:()=>{ card('info','幹部改選','安靜投了票，繼續當個普通同學。'); cont(); }}
+    ]);
+  } else if(semIdx===3){
+    if(S.track==='gen'){
+      choose('分組的時刻到了：要選自然組還是社會組？',[
+        {t:'自然組',s:'數理掛帥，之後學測理化占比高',main:true,f:()=>{ S.classType='自然組'; card('info','分組結果','進了自然組，教室多了理化課本的味道。'); cont(); }},
+        {t:'社會組',s:'文史社會為主，之後學測人文占比高',f:()=>{ S.classType='社會組'; card('info','分組結果','進了社會組，開始被史地公民筆記淹沒。'); cont(); }}
+      ]);
+    } else {
+      choose('高職分流：接下來想往哪個方向發展？',[
+        {t:'術科實作導向',s:'之後實習/證照事件更常出現，術科手感佳',main:true,f:()=>{ S.classType='實作導向'; card('info','分流結果','選了術科導向，開始泡在實習工廠/廚房/機房。'); cont(); }},
+        {t:'升學導向（拚統測）',s:'更著重統測考科，實習事件較少',f:()=>{ S.classType='升學導向'; card('info','分流結果','決定升學導向，統測考科課本又厚了一點。'); cont(); }}
+      ]);
+    }
+  } else if(semIdx===4){
+    card('info','校慶倒數','再過三週就是一年一度的校慶，班上要出一支全班舞蹈。這件事，這學期躲不掉。');
+    cont();
+  } else if(semIdx===5){
+    if(S.track==='gen'){
+      card('info','高三上','學測倒數計時開始跳動，模擬考一場接一場。');
+    } else {
+      card('info','高三上','統測倒數計時開始跳動，證照考試一場接一場。');
+    }
+    cont();
+  } else if(semIdx===6){
+    if(S.track==='gen'){
+      const prelimScaled=computePrelimGenScore();
+      if(prelimScaled<25){
+        S.examPath='fenke';
+        card('bad','學測放榜','成績出來了，這次學測沒有考出理想的分數，落點不太理想。');
+        choose('接下來怎麼辦？',[
+          {t:'咬牙準備分科測驗',s:'課業 +、精力 -',main:true,f:()=>{ applyEff({study:3,energy:-4}); card('good','準備分科','擦乾眼淚，把課本又翻開，決定拚分科測驗。課業 <b class="up">+3</b>，精力 <b class="dn">-4</b>。'); board(); cont(); }},
+          {t:'心灰意冷，隨便準備',s:'課業 -',warn:true,f:()=>{ applyEff({study:-2,social:1}); card('bad','心灰意冷','提不起勁讀書，跟朋友抱怨了一整晚。課業 <b class="dn">-2</b>。'); board(); cont(); }}
+        ]);
+      } else if(chance(20)){
+        S.examPath='fenke';
+        card('bad','學測放榜 意外落榜','分數其實不差，但這次個人申請/分發都沒排上理想校系，意外要準備分科測驗了。');
+        choose('接下來怎麼辦？',[
+          {t:'重新調整心態，準備分科',s:'課業 +、精力 -',main:true,f:()=>{ applyEff({study:3,energy:-3}); card('good','重新出發','雖然意外，但很快振作，開始準備分科測驗。課業 <b class="up">+3</b>，精力 <b class="dn">-3</b>。'); board(); cont(); }},
+          {t:'覺得不甘心，情緒低落',s:'人際 -',warn:true,f:()=>{ applyEff({social:-3}); card('bad','不甘心','這幾天心情很低落，也沒什麼心情理人。人際 <b class="dn">-3</b>。'); board(); cont(); }}
+        ]);
+      } else {
+        S.examPath='interview';
+        card('gold','學測放榜 錄取捷報','成績出來了，這次學測考得不錯，個人申請已經過了篩選，接下來要準備面試了。');
+        cont();
+      }
+    } else {
+      card('info','高三下','最後一個學期，很快就要放榜／填志願了。');
+      cont();
+    }
+  } else { cont(); }
+}
+
+/* ===== 事件池 ===== */
+function reportEvent(){
+  return {id:'report',title:'分組報告',cond:()=>S.examIndex<13,
+    desc:'課堂分組報告，組員各有各的算盤，這次你想怎麼扮演自己的角色？',
+    choices:[
+      {t:'主動扛下大部分',s:'課業 +、人際 +（隊友感謝），精力 -，但可能爆肝',main:true,
+        f:()=>{ S.reportHelp++;
+          if(chance(75)){ applyEff({study:4,social:3,energy:-5}); card('good','分組報告',`你把報告扛下來，熬夜整理到很晚。課業 <b class="up">+4</b>、人際 <b class="up">+3</b>，精力 <b class="dn">-5</b>。`); }
+          else { applyEff({study:1,social:3,energy:-11}); card('bad','分組報告 爆肝','為了報告熬夜到快天亮，隔天上課根本在放空，讀書效率大打折扣。人際 <b class="up">+3</b>，精力 <b class="dn">-11</b>。'); }
+          board(); }},
+      {t:'平均分工，各做各的',s:'小幅課業 +',f:()=>{ applyEff({study:2}); card('info','分組報告','大家平均分工，報告普普通通地交出去了。'); board(); }},
+      {t:'能拖就拖，交給別人',s:'人際 -，精力 +',warn:true,
+        f:()=>{ applyEff({social:-4,energy:3}); S.reportSlack++; card('bad','分組報告',`你這次選擇擺爛，組員在群組裡的訊息已讀不回你。人際 <b class="dn">-4</b>。`); board(); }}
+    ]};
+}
+function drinkEvent(){
+  const canTreat = S.money>=200 || S.social>=65;
+  const choices=[];
+  if(canTreat){
+    choices.push({t:'主動請客，幫大家出錢',s:'人際 +多、金錢 -多，但有機會出意外',main:true,
+      f:()=>{
+        const sponsored = S.money<200 && S.social>=65;
+        if(chance(70)){ applyEff({social:6,money:sponsored?0:-200});
+          card('good','手搖飲揪團', sponsored?'荷包不太夠，好在爸媽多塞了點零用錢，大家還是喝得很開心。人際 <b class="up">+6</b>。':'大家喝得很開心，直呼你夠意思。人際 <b class="up">+6</b>，金錢 <b class="dn">-200</b>。'); }
+        else { applyEff({social:1,money:sponsored?0:-220,energy:-6});
+          card('bad','飲料出包', sponsored?'錢是爸媽出的，結果飲料還壞掉了，大家鬧肚子……人際只有 <b class="up">+1</b>，精力 <b class="dn">-6</b>。':'沒想到飲料放太久壞掉了，好幾個人喝完鬧肚子，你也不例外……人際只有 <b class="up">+1</b>，還多花了看醫生的錢，精力 <b class="dn">-6</b>。'); }
+        board(); }});
+  }
+  choices.push({t:'跟，自己出錢就好',s:'人際 +、金錢 -50',f:()=>{
+      const free = S.money<50;
+      if(free) S.cheapCount++;
+      if(chance(85)){ applyEff({social:3,money:free?0:-50});
+        card('good','手搖飲揪團', free?'錢不太夠，厚著臉皮讓同學先幫忙出，跟著喝了一杯。人際 <b class="up">+3</b>。':'跟著點了一杯，順便跟同學聊了一下。人際 <b class="up">+3</b>，金錢 <b class="dn">-50</b>。'); }
+      else { applyEff({social:1,money:free?0:-50,energy:-4}); card('bad','手搖飲揪團','飲料好像放比較久，喝完有點反胃。精力 <b class="dn">-4</b>。'); }
+      board(); }});
+  choices.push({t:'省錢，不跟',s:'金錢 +',f:()=>{ card('info','手搖飲揪團','忍住手癢，把飲料錢省下來。'); }});
+  return {id:'drink',title:'手搖飲揪團',desc:'班群裡有人在揪手搖飲團購，要不要跟，甚至幫大家出錢？',choices};
+}
+function sickEvent(severity){
+  severity=severity||1;
+  const tag=severity>=3?'重感冒':severity===2?'感冒':'小感冒';
+  const desc=severity>=2?'最近精力透支，免疫力下滑，鼻塞、咳嗽、發燒接踵而來。':'鼻塞加咳嗽，這幾天身體不太舒服。';
+  const pushE=severity>=3?-15:severity===2?-11:-8;
+  const pushStudy=severity>=3?-6:severity===2?-3:-1;
+  const restE=severity>=3?9:severity===2?7:5;
+  const restStudy=severity>=3?-5:severity===2?-3:-1;
+  return {id:'sick',title:tag+'了',desc,
+    choices:[
+      {t:'硬撐去上課',warn:true,f:()=>{ applyEff({energy:pushE,study:pushStudy}); card('bad',tag+'硬撐',`硬撐著去上課，整天昏昏沉沉，讀書效率也差。精力 <b class="dn">${pushE}</b>${pushStudy?`，課業 <b class="dn">${pushStudy}</b>`:''}。`); board(); }},
+      {t:'請假在家休息',main:severity>=2,f:()=>{ applyEff({energy:restE,study:restStudy}); S.sickLeaveCount++; card('info',tag+'請假',`在家休息，精力 <b class="up">+${restE}</b>，但也少上了幾堂課，課業 <b class="dn">${restStudy}</b>。`); board(); }}
+    ]};
+}
+function friendFightEvent(){
+  return {id:'fight',title:'跟好朋友吵架了',
+    desc:'因為一件小事，跟最好的朋友鬧翻了，氣氛整天都很僵。',
+    choices:[
+      {t:'主動先道歉、和好',s:'人際 +，但對方心情難預料',main:true,f:()=>{
+          if(chance(75)){ applyEff({social:5}); card('good','和好','鼓起勇氣先開口，兩人和好如初。人際 <b class="up">+5</b>。'); }
+          else { applyEff({social:1}); card('info','和好 未竟','鼓起勇氣道歉，但對方好像還在氣頭上，只勉強回應了一下。人際只有小幅 <b class="up">+1</b>。'); }
+          board(); }},
+      {t:'先冷戰，看對方會不會先低頭',s:'人際 -',f:()=>{ applyEff({social:-5}); card('bad','冷戰','兩人幾天沒說話，教室的空氣有點尷尬。人際 <b class="dn">-5</b>。'); board(); }}
+    ]};
+}
+function churchCampEvent(){
+  return {id:'churchCamp',title:'教會退修營',
+    desc:'教會／團契這學期辦退修會，剛好卡在段考週前一週。',
+    choices:[
+      {t:'參加退修會',s:'靈命 +多、讀書時間被排擠',main:true,
+        f:()=>{ applyEff({faith:8,energy:-3}); card('good','退修會',`參加了退修會，收穫很多。靈命 <b class="up">+8</b>，但少了一週讀書時間。`); board(); }},
+      {t:'這次不去，留在家讀書',s:'靈命 -',warn:true,
+        f:()=>{ applyEff({faith:-6}); S.everSkippedChurch=true; card('bad','退修會','決定留在家K書，缺席了這次退修會。靈命 <b class="dn">-6</b>。'); board(); }}
+    ]};
+}
+function phoneEvent(){
+  return {id:'phone',title:'滑手機的誘惑',
+    desc:'讀書讀到一半，手機一直跳通知，社群動態滑了停不下來。',
+    choices:[
+      {t:'關網路，衝刺讀書',s:'課業 +',main:true,f:()=>{ applyEff({study:4}); card('good','關網路','狠下心把網路關掉，多讀了不少書。課業 <b class="up">+4</b>。'); board(); }},
+      {t:'耍廢滑一下，放鬆心情',s:'精力 +、課業 -',f:()=>{ applyEff({energy:5,study:-3}); card('info','耍廢一下','滑了半小時手機，心情放鬆了，但也少讀了一點書。'); board(); }}
+    ]};
+}
+function familyEvent(){
+  return {id:'family',title:'家人拿成績單念',cond:()=>{ const last=S.scores[S.scores.length-1]; return last===undefined||last<75; },
+    desc:'爸媽看到最近的成績，忍不住念了幾句。',
+    choices:[
+      {t:'認真溝通，說明自己的規劃',s:'人際 +、精力 -小',f:()=>{ applyEff({social:2,energy:-2}); card('good','家庭溝通','好好跟爸媽聊了一下自己的想法，氣氛緩和不少。'); board(); }},
+      {t:'不耐煩地頂回去',s:'人際 -',warn:true,f:()=>{ applyEff({social:-4}); card('bad','家庭衝突','忍不住頂了幾句，家裡氣氛冷了整晚。人際 <b class="dn">-4</b>。'); board(); }}
+    ]};
+}
+function coupleFightEvent(){
+  return {id:'couplefight',title:'跟另一半吵架了',
+    desc:'這次段考成績退步了，另一半覺得你心情不好都在遷怒，兩人因為一件小事吵了起來。',
+    choices:[
+      {t:'主動道歉、和好',s:'人際 +，但對方心情難預料',main:true,f:()=>{
+          if(chance(75)){ applyEff({social:4}); card('good','和好','放低身段先開口，兩人和好了。人際 <b class="up">+4</b>。'); }
+          else { card('info','和好 未竟','道歉了，但對方還在消化情緒，這次沒什麼變化。'); }
+          board(); }},
+      {t:'等對方先低頭',s:'人際 -',warn:true,f:()=>{ applyEff({social:-4}); card('bad','冷戰','誰都不想先低頭，這幾天感覺特別漫長。人際 <b class="dn">-4</b>。'); board(); }}
+    ]};
+}
+function breakupCrisisEvent(){
+  return {id:'breakup',title:'感情，遇到瓶頸',
+    desc:'成績又退步了，這已經是這陣子第三次為了同樣的事吵架，兩人開始認真討論要不要繼續走下去。',
+    choices:[
+      {t:'提分手，先衝刺考試',s:'課業 +，人際 -多',warn:true,f:()=>{
+          S.inRelationship=false; applyEff({study:5,social:-6});
+          card('bad','分手','兩人決定先放下這段感情，專心準備考試。課業 <b class="up">+5</b>，人際 <b class="dn">-6</b>。');
+          traitCard('single','單身貴族','放下了這段感情，一個人也能把日子過得很好。');
+          board(); }},
+      {t:'撐下去，繼續交往',s:'結果難料',main:true,f:()=>{
+          S.coupleFightCount=0;
+          if(chance(60)){ applyEff({social:4}); card('good','撐過去了','兩人重新調整步調，感情反而更穩了。人際 <b class="up">+4</b>。'); }
+          else { applyEff({study:-5,social:-2}); card('bad','貌合神離','雖然沒分手，但心思常常不在書本上。課業 <b class="dn">-5</b>，人際 <b class="dn">-2</b>。'); }
+          board(); }}
+    ]};
+}
+function confessEvent(){
+  return {id:'confess',title:'有人跟你告白',
+    desc:'放學後，被叫到樓梯間——有人鼓起勇氣跟你告白了。',
+    choices:[
+      {t:'答應交往',s:'人際 +多、之後精力分配會更緊繃',main:true,
+        f:()=>{ S.inRelationship=true; S.coupleFightCount=0; applyEff({social:8});
+          card('gold','戀愛開始',`答應了。放學後多了一個人陪，人際 <b class="up">+8</b>。之後要多留一點時間給對方。`);
+          board(); }},
+      {t:'婉拒，先專心過自己的高中生活',f:()=>{ applyEff({social:2}); card('info','婉拒','溫柔地拒絕了，繼續走自己的路。'); board(); }}
+    ]};
+}
+function serveEvent(){
+  return {id:'serve',cond:()=>S.inChurch,title:'教會服事邀約',
+    desc:'牧者問你要不要在主日中擔任服事（司琴/主持/小組長），需要額外時間準備。',
+    choices:[
+      {t:'接下服事',s:'靈命 +多，精力 -',main:true,f:()=>{ applyEff({faith:7,energy:-4}); card('good','接下服事','答應了服事，準備過程雖然累，但很有意義。靈命 <b class="up">+7</b>。'); board(); }},
+      {t:'這次先觀望，一般聚會就好',f:()=>{ card('info','教會服事','這次先婉拒，維持一般聚會的參與。'); }}
+    ]};
+}
+function overtimeEvent(){
+  return {id:'overtime',cond:()=>S.hasJob,title:'打工被要求加班',
+    desc:`${S.jobName||'店裡'}人手不足，店長問你這週能不能多排幾班，剛好卡在段考前。`,
+    choices:[
+      {t:'答應加班',s:'金錢 +多、課業 -、精力 -，但可能遇到奧客',warn:true,
+        f:()=>{
+          if(chance(80)){ applyEff({money:400,study:-5,energy:-6}); card('bad','加班賺錢',`答應加班，賺了不少，但段考前的讀書時間被吃掉了。金錢 <b class="up">+400</b>，課業 <b class="dn">-5</b>。`); }
+          else { applyEff({money:400,study:-7,energy:-11}); card('bad','加班出包','加班時剛好遇到奧客大暴走，處理到打烊，整個人累到虛脫。金錢 <b class="up">+400</b>，課業 <b class="dn">-7</b>，精力 <b class="dn">-11</b>。'); }
+          board(); }},
+      {t:'婉拒，段考前要顧課業',s:'課業維持',main:true,f:()=>{ card('good','婉拒加班','跟店長說段考在即，這週先不加班了。守住了讀書時間。'); }}
+    ]};
+}
+function tutorEvent(){
+  return {id:'tutor',cond:()=>S.study<40,title:'導師約談',
+    desc:'最近幾次成績不太理想，導師把你叫去辦公室聊聊。',
+    choices:[
+      {t:'決定加強讀書計畫',s:'課業 +',main:true,f:()=>{ applyEff({study:5}); card('good','導師約談','跟導師一起訂了讀書計畫，重新調整步調。課業 <b class="up">+5</b>。'); board(); }},
+      {t:'敷衍帶過，維持原樣',f:()=>{ card('info','導師約談','應付了幾句，走出辦公室後照舊過日子。'); }}
+    ]};
+}
+function internshipEvent(){
+  return {id:'intern',track:'voc',title:'校外實習輪班',
+    desc:'這學期排到校外實習，師傅盯得很緊，實作壓力不小。',
+    choices:[
+      {t:'認真表現，爭取師傅肯定',s:'課業（術科）+、精力 -',main:true,
+        f:()=>{ applyEff({study:5,energy:-5}); S.internshipGood++; card('good','實習認真',`認真跟著師傅學，得到不少稱讚。術科能力 <b class="up">+5</b>。`); board(); }},
+      {t:'應付了事，能混就混',s:'課業 -',warn:true,
+        f:()=>{ applyEff({study:-3}); card('bad','實習應付','實習只是應付了事，師傅看在眼裡。'); board(); }}
+    ]};
+}
+function licenseEvent(n){
+  return {id:'license'+n,track:'voc',title:'證照考試報名',
+    desc:'乙／丙級技術士證照考試開放報名，要不要花錢報名衝刺班？',
+    choices:[
+      {t:'花錢報名衝刺班',s:'金錢 -大、課業（術科）+多',main:true,
+        f:()=>{ applyEff({money:-600,study:6}); S.licenseCount++; card('good','證照衝刺',`報名了衝刺班，術科能力扎實提升。金錢 <b class="dn">-600</b>，術科 <b class="up">+6</b>。`); board(); }},
+      {t:'自己練習就好，省錢',s:'金錢維持、課業小幅 +',
+        f:()=>{ applyEff({study:2}); card('info','自主練習','自己買書練習，省了報名費。'); board(); }}
+    ]};
+}
+const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent];
+
+/* 告白：依年級門檻觸發（高一人際>45，高二/高三人際>60），還沒交往的話一個年級只會問一次 */
+function checkConfessionTrigger(){
+  if(S.inRelationship) return false;
+  const grade = S.examIndex<=6?1:(S.examIndex<=12?2:3);
+  if(S.confessAskedGrade===grade) return false;
+  const threshold = grade===1?45:60;
+  return S.social>threshold;
+}
+/* 感情週期：交往中，段考退步且機率命中就吵架；吵架滿2次後下一次改觸發分手抉擇 */
+function checkCoupleCycle(){
+  if(!S.inRelationship) return null;
+  if(S.scores.length<2) return null;
+  const last=S.scores[S.scores.length-1], prev=S.scores[S.scores.length-2];
+  if(last>=prev) return null;
+  if(!chance(50)) return null;
+  return S.coupleFightCount>=2 ? 'breakup' : 'fight';
+}
+
+function pickPoolEvent(){
+  if(S.track==='voc'){
+    if(S.examIndex>=7 && S.examIndex<=9 && !S.usedPoolIds.includes('intern1')){ S.usedPoolIds.push('intern1'); return internshipEvent(); }
+    if(S.examIndex===13 && !S.usedPoolIds.includes('license1')){ S.usedPoolIds.push('license1'); return licenseEvent(1); }
+    if(S.examIndex===16 && !S.usedPoolIds.includes('license2')){ S.usedPoolIds.push('license2'); return licenseEvent(2); }
+  }
+  let pool=POOL_GENERIC.map(f=>f()).filter(e=>!e.cond||e.cond());
+  /* 高職術科導向：高一高二課業與小組報告佔比較重，增加分組報告出現機率 */
+  if(S.track==='voc' && S.classType==='實作導向' && S.examIndex<=12){
+    const rep=reportEvent();
+    if(!rep.cond || rep.cond()) pool.push(reportEvent(),reportEvent());
+  }
+  /* 避免連續重複同一事件 */
+  const last=S.log[S.log.length-1];
+  if(last)pool=pool.filter(e=>e.id!==last)||pool;
+  const chosen=pick(pool.length?pool:POOL_GENERIC.map(f=>f()));
+  S.log.push(chosen.id);
+  return chosen;
+}
+/* 精力越低，感冒風險越高 */
+function maybeSick(){
+  let p=0;
+  if(S.energy<15)p=55; else if(S.energy<30)p=30; else if(S.energy<45)p=12;
+  if(p>0 && chance(p)) return S.energy<15?3:(S.energy<30?2:1);
+  return 0;
+}
+
+/* ===== 校慶舞蹈（第10次段考前，固定大事件）===== */
+function danceEvent(cont){
+  card('info','校慶舞蹈練習週','全班要在校慶當天表演舞蹈，練習排在放學後，怎麼投入是你的選擇。');
+  choose('校慶舞蹈，你想怎麼參與？',[
+    {t:'自願當隊長，全力衝刺',s:'人際 +多，精力 -多，可能解鎖特質，但帶人不容易',main:true,
+      f:()=>{ S.danceCaptain=true;
+        if(chance(80)){ applyEff({social:10,energy:-10}); card('gold','舞蹈隊長',`自願扛下隊長，每天留下來教動作。校慶當天全班表演大成功，人際 <b class="up">+10</b>，精力 <b class="dn">-10</b>。`); }
+        else { applyEff({social:6,energy:-14}); card('bad','舞蹈隊長 風波','當隊長不好當，跟幾個組員意見不合吵了起來，排練變得更累人。人際 <b class="up">+6</b>，精力 <b class="dn">-14</b>。'); }
+        board(); cont(); }},
+    {t:'認真參加練習',s:'人際 +、精力 -',f:()=>{ applyEff({social:5,energy:-5}); card('good','認真參與','跟著大家認真練習，表演當天順利完成。人際 <b class="up">+5</b>。'); board(); cont(); }},
+    {t:'意思意思跟著跳',s:'人際小幅 +',f:()=>{ applyEff({social:2}); card('info','意思參加','站在後排隨便跟著動作，混過去了。'); board(); cont(); }},
+    {t:'請假不參加',s:'人際 -多，精力 +、多出讀書時間',warn:true,
+      f:()=>{ applyEff({social:-8,energy:5,study:3}); S.skipCount++;
+        card('bad','缺席校慶','跟老師請假沒參加，班上表演少了一個人，人際 <b class="dn">-8</b>，但多讀了一點書，課業 <b class="up">+3</b>。'); board(); cont(); }}
+  ]);
+}
+
+/* ===== 時間分配面板 ===== */
+function rollPool(){
+  const bonus = S.examIndex>=13 ? 0 : 2; /* 高三時間更緊繃，少了額外空堂 */
+  const d1=ri(1,6), d2=ri(1,6);
+  return {d1,d2,pool:d1+d2+bonus};
+}
+function studyMult(){
+  if(S.track==='voc' && S.classType==='實作導向'){
+    return S.examIndex<=12 ? 1.3 : 1.0; /* 術科：高一高二課業比重高，高三恢復正常 */
+  }
+  let m = S.examIndex>=10 ? 1.6 : 1.0; /* 普高 & 高職升學導向：跟高中一樣，高二下起衝刺 */
+  if(S.examIndex>=13 && S.keptBusyIntoHighSchool){ m = 1.0+(m-1.0)*0.5; } /* 升高三暑假沒退社團/打工，加乘減半 */
+  return m;
+}
+function decayStats(){
+  S.study=S.study*0.96;
+  S.social=S.social*0.955;
+  S.faith=S.faith*0.955;
+}
+function allocPanel(pool,dice,cont){
+  const cats=[
+    {k:'study',n:'讀書',u:studyMult()>1?`課業 +${(1.3*studyMult()).toFixed(1)}（加乘中）`:'課業 +1.3'},
+    {k:'club',n:'社團',u:'人際 +1.0',lock:!S.hasClub},
+    {k:'friend',n:'朋友',u:'人際 +1.15',lock:false},
+    {k:'job',n:'打工',u:'$150',lock:!S.hasJob},
+    {k:'church',n:'靈修',u:'靈命 +1.3'},
+    {k:'rest',n:'體力',u:'精力 +4'}
+  ];
+  const val={study:0,club:0,friend:0,job:0,church:0,rest:0};
+  function used(){ return val.study+val.club+val.friend+val.job+val.church+val.rest; }
+  function poolLineText(remain){
+    return remain>0?`還剩 ${remain} 點沒分配，全部用完才能繼續（不知道怎麼分？剩的可以都丟給「體力」）`:`共 ${pool} 點，已全部分配完畢`;
+  }
+  function render(){
+    const remain=pool-used();
+    let html=`<div class="title">時間分配（本次段考前）</div>`;
+    if(dice){
+      const diff=pool-dice.d1-dice.d2;
+      const extra= diff>0 ? `<span class="diceEq">＋${diff}（空堂）</span>` : diff<0 ? `<span class="diceEq">（精力不足，縮減 ${-diff}）</span>` : '';
+      html+=`<div class="diceRow"><div class="die2">${dice.d1}</div><div class="die2">${dice.d2}</div>${extra}<span class="diceEq">＝</span><span class="diceTotal">${pool} 點</span></div>`;
+    }
+    html+=`<div class="poolline">${poolLineText(remain)}</div><div class="wk-grid">`;
+    cats.forEach(c=>{
+      html+=`<div class="wk-item${c.lock?' locked':''}">
+        <div class="nm">${c.n}<small>${c.lock?'尚未開放':c.u}</small></div>
+        <div class="ctr">
+          <button class="stepbtn" data-a="-" data-k="${c.k}" ${c.lock||val[c.k]<=0?'disabled':''}>−</button>
+          <div class="val">${val[c.k]}</div>
+          <button class="stepbtn" data-a="+" data-k="${c.k}" ${c.lock||remain<=0?'disabled':''}>＋</button>
+        </div>
+      </div>`;
+    });
+    html+=`</div><button class="btn main" id="alloc-go" style="margin-top:12px"${remain>0?' disabled':''}>確定分配 ▸</button>`;
+    act(html);
+    Array.from($('act').querySelectorAll('.stepbtn')).forEach(b=>{
+      b.onclick=()=>{ const k=b.dataset.k; if(b.dataset.a==='+')val[k]++; else val[k]--; render(); };
+    });
+    const goBtn=$('alloc-go');
+    if(!goBtn.disabled){
+      goBtn.onclick=()=>{ $('act').style.display='none'; cont(val); };
+    }
+  }
+  render();
+}
+
+/* ===== 寒暑假 ===== */
+const BREAK_AFTER={3:'winter',6:'summer',9:'winter',12:'summer',15:'winter'};
+const BREAK_CATS={
+  camp:{n:'大學科系營隊',sub:'課業+2/週・人際+1/週・金錢-250/週',eff:{study:2,social:1,money:-250}},
+  clubtrip:{n:'社團社遊/集訓',sub:'人際+2/週・精力-2/週',eff:{social:2,energy:-2},lockKey:'hasClub'},
+  discipleship:{n:'高中門徒營',sub:'靈命+2/週・精力-1/週',eff:{faith:2,energy:-1}},
+  jobweek:{n:'打工',sub:'金錢+220/週・精力-2/週',eff:{money:220,energy:-2}},
+  lazy:{n:'在家滑手機睡到飽',sub:'精力+5/週・課業-1/週・人際-1/週',eff:{energy:5,study:-1,social:-1}},
+  hangout:{n:'跟朋友出去玩',sub:'人際+2/週・金錢-100/週',eff:{social:2,money:-100}},
+  cram:{n:'補習',sub:'課業+2.5/週・金錢-260/週・精力-1/週',eff:{study:2.5,money:-260,energy:-1}},
+  kidscamp:{n:'教會兒童營（服事）',sub:'靈命+2/週・人際+1/週・精力-2/週',eff:{faith:2,social:1,energy:-2}},
+  familytrip:{n:'家中出遊',sub:'人際+1.5/週・精力+2/週・金錢-220/週',eff:{social:1.5,energy:2,money:-220}},
+  rest:{n:'放鬆休息',sub:'精力+3/週',eff:{energy:3}}
+};
+const WINTER_KEYS=['camp','clubtrip','discipleship','jobweek','lazy','hangout','cram','rest'];
+const SUMMER_KEYS=['camp','clubtrip','discipleship','jobweek','lazy','hangout','cram','kidscamp','familytrip','rest'];
+function weekAllocPanel(type,weeks,cont){
+  const keys= type==='winter'?WINTER_KEYS:SUMMER_KEYS;
+  const val={}; keys.forEach(k=>val[k]=0);
+  function used(){ return keys.reduce((a,k)=>a+val[k],0); }
+  function moneyLocked(k){
+    /* 檢查「再加一週」是否會超出目前荷包（家人關係好則永不鎖） */
+    const c=BREAK_CATS[k];
+    if(!c.eff.money || c.eff.money>=0) return false;
+    if(k==='hangout') return false; /* 跟朋友出去玩：沒錢也能去，只是會變摳門 */
+    if(S.social>=65) return false; /* 家人關係好，爸媽罩你 */
+    let committed=0;
+    keys.forEach(kk=>{ if(kk==='hangout')return; const cc=BREAK_CATS[kk]; if(cc.eff.money<0) committed+=-cc.eff.money*val[kk]; });
+    return committed+(-c.eff.money) > S.money;
+  }
+  function poolLineText(remain){
+    return remain>0?`還剩 ${remain} 週沒安排，全部用完才能繼續（不知道怎麼排？剩的可以都丟給「放鬆休息」）`:`共 ${weeks} 週，已全部安排完畢`;
+  }
+  function render(){
+    const remain=weeks-used();
+    let html=`<div class="title">${type==='winter'?'寒假':'暑假'}安排（共 ${weeks} 週）</div><div class="poolline">${poolLineText(remain)}</div><div class="wk-grid">`;
+    keys.forEach(k=>{
+      const c=BREAK_CATS[k];
+      const clubLocked=c.lockKey && !S[c.lockKey];
+      const mLocked=!clubLocked && moneyLocked(k);
+      const subText = clubLocked?'尚未開放':(mLocked?'金錢不足（跟家人關係好可以請款）':c.sub);
+      html+=`<div class="wk-item${clubLocked?' locked':''}">
+        <div class="nm">${c.n}<small>${subText}</small></div>
+        <div class="ctr">
+          <button class="stepbtn" data-a="-" data-k="${k}" ${clubLocked||val[k]<=0?'disabled':''}>−</button>
+          <div class="val">${val[k]}</div>
+          <button class="stepbtn" data-a="+" data-k="${k}" ${clubLocked||remain<=0||mLocked?'disabled':''}>＋</button>
+        </div>
+      </div>`;
+    });
+    html+=`</div><button class="btn main" id="wk-go" style="margin-top:12px"${remain>0?' disabled':''}>確定安排 ▸</button>`;
+    act(html);
+    Array.from($('act').querySelectorAll('.stepbtn')).forEach(b=>{
+      b.onclick=()=>{ const k=b.dataset.k; if(b.dataset.a==='+')val[k]++; else val[k]--; render(); };
+    });
+    const goBtn=$('wk-go');
+    if(!goBtn.disabled){
+      goBtn.onclick=()=>{ $('act').style.display='none';
+        const total={study:0,social:0,faith:0,money:0,energy:0};
+        keys.forEach(k=>{
+          const n=val[k]; if(!n)return; const c=BREAK_CATS[k];
+          if(k==='hangout'){
+            total.social+=(c.eff.social||0)*n;
+            const cost=-(c.eff.money||0)*n;
+            if(S.money<cost){ S.cheapCount+=n; }
+            else { total.money+=(c.eff.money||0)*n; }
+            return;
+          }
+          Object.keys(c.eff).forEach(stat=>{ total[stat]=(total[stat]||0)+c.eff[stat]*n; });
+          if(k==='jobweek')S.cumJobPoints+=n*2;
+        });
+        applyEff(total);
+        board();
+        checkTraits();
+        const usedNames=keys.filter(k=>val[k]>0).map(k=>`${BREAK_CATS[k].n}×${val[k]}週`).join('、');
+        card('good',(type==='winter'?'寒假':'暑假')+'結束',
+          `這段假期安排了：${usedNames}。<br><span style="color:var(--dim);font-size:12px">課業 ${Math.round(S.study)}／人際 ${Math.round(S.social)}／靈命 ${Math.round(S.faith)}／金錢 $${Math.round(S.money)}／精力 ${Math.round(S.energy)}</span>`);
+        cont();
+      };
+    }
+  }
+  render();
+}
+function breakEvent(type,cont){
+  const weeks= type==='winter'?4:8;
+  divider(type==='winter'?'寒假':'暑假');
+  card('info',type==='winter'?'寒假開始（4週）':'暑假開始（8週）',
+    type==='winter'?'段考結束，接下來是四週的寒假，要怎麼安排？':'學期結束，漫長的八週暑假開始了，要怎麼安排？');
+  weekAllocPanel(type,weeks,cont);
+}
+function summerBurnoutEvent(cont){
+  card('bad','爸媽發火了','升高三前的這個暑假，你花太多時間在社團和打工上，成績單一出來，爸媽整個氣炸，覺得你太不專心。');
+  choose('要不要收斂一點，退出社團或打工？',[
+    {t:'決定退出，專心準備高三',main:true,f:()=>{
+      S.hasClub=false; S.hasJob=false; S.keptBusyIntoHighSchool=false;
+      applyEff({social:-3});
+      card('good','決定退出','忍痛跟社團夥伴、店長告別，把時間留給高三。人際 <b class="dn">-3</b>，但接下來讀書效率會是最佳狀態。');
+      board(); cont(); }},
+    {t:'不想退，繼續維持生活步調',warn:true,f:()=>{
+      S.keptBusyIntoHighSchool=true;
+      card('bad','沒有退出','雖然被念了一頓，還是決定繼續兼顧社團跟打工。高三的讀書效率會打折扣。');
+      cont(); }}
+  ]);
+}
+
+/* ===== 段考結算 ===== */
+function resolveExam(val){
+  applyEff({study:val.study*1.3*studyMult(), social:val.club*1.0+val.friend*1.15, faith:val.church*1.3, money:val.job*150, energy:val.rest*4});
+  S.cumJobPoints+=val.job;
+  /* 精力消耗 */
+  const spentEnergy=val.study*3+val.club*2.5+val.friend*1.5+val.job*3+val.church*1;
+  applyEff({energy:-spentEnergy});
+  if(S.energy<=8)S.lowEnergyCount++;
+  if(S.money<=200)S.lowMoneyCount++;
+  const fatigue=S.energy<25?(25-S.energy)*0.5:0;
+  const score=clamp(Math.round(S.study*0.85+18+N0(6)-fatigue),0,100);
+  S.scores.push(score);
+  board();
+  const tone= score>=80?'gold':score>=60?'good':score>=40?'info':'bad';
+  const comment= score>=85?'全班前段，穩穩的。':score>=70?'表現不錯，繼續保持。':score>=55?'普普通通，還有進步空間。':score>=40?'有點吃力了，該找回讀書節奏。':'這次真的很低空飛過，得警覺了。';
+  divider(examLabel());
+  card(tone,'段考成績：'+score+' 分',`${comment}<br><span style="color:var(--dim);font-size:12px">課業 ${Math.round(S.study)}／人際 ${Math.round(S.social)}／靈命 ${Math.round(S.faith)}／精力 ${Math.round(S.energy)}</span>`);
+  checkTraits();
+  board();
+}
+
+function checkTraits(){
+  if(S.examIndex>=9 && S.study>=88 && S.social<=35) traitCard('bookworm','讀書狂','課業一路衝到頂尖，但社交生活幾乎是空白。');
+  if(S.social>=90) traitCard('popular','中央空調','走在校園裡幾乎人人都認識你，對誰都一樣溫暖。');
+  if(S.faith>=90) traitCard('faithful','Holy基督徒','教會裡最穩定的那個人，總是在。');
+  if(S.lowMoneyCount>=3) traitCard('brokewallet','錢包扁扁','荷包長期見底，練就一身省錢功夫。');
+  if(S.cumJobPoints>=55) traitCard('workhard','打工達人','三年累積的工讀時數，換算成經驗值也很可觀。');
+  if(S.lowEnergyCount>=3) traitCard('burntout','蠟燭多頭燒','精力一次次見底又撐過來，體力被鍛鍊得驚人。');
+  if(S.reportHelp>=4 && S.reportSlack===0) traitCard('teammate','神隊友','每次分組報告都扛下最多，組員都記得你的好。');
+  if(S.reportSlack>=2) traitCard('freeloader','就你在雷','分組報告常常擺爛，組員名單上偷偷把你劃掉。');
+  if(S.danceCaptain) traitCard('danceleader','舞蹈隊長','校慶舞蹈的靈魂人物，畢業紀念冊上一定有你。');
+  if(S.inRelationship) traitCard('inlove','戀愛小狗','高中生活多了一個人分享喜怒哀樂，整天黏在一起。');
+  if(S.internshipGood>=1 && S.track==='voc') traitCard('internstar','實習之星','校外實習的表現讓師傅印象深刻。');
+  if(S.licenseCount>=2 && S.track==='voc') traitCard('licensepro','證照達人','手上多了不只一張技術士證照。');
+  if(S.cheapCount>=3) traitCard('cheap','小氣巴拉','出去玩總是讓朋友先出錢，荷包是保住了，但朋友心裡都有數。');
+  if(S.money>=5000) traitCard('richking','大富翁','荷包滿滿，畢業時存款比很多社會新鮮人還多。');
+  if(S.sickCount>=5) traitCard('daiyu','林黛玉','整天病懨懨，風吹了就倒，卻也把生病活成了一種日常美學。');
+}
+
+/* ===== 主流程 ===== */
+function chooseForcedEvent(ev){
+  /* 強制事件的選項，選完後要接續進入「時間分配」面板 */
+  const wrapped=ev.choices.map(o=>({...o,f:()=>{ o.f(); afterEvent(); }}));
+  choose(ev.title+'，你怎麼選？',wrapped);
+}
+function nextExam(){
+  S.examIndex++;
+  if(S.examIndex>18){ return endGame(); }
+  decayStats();
+  board();
+  const semStart = (S.examIndex-1)%3===0;
+  const afterIntro = ()=>{
+    if(S.examIndex===10){ // 校慶舞蹈固定在第10次段考前，選完直接進入時間分配
+      danceEvent(afterEvent);
+      return;
+    }
+    afterForcedPick();
+  };
+  const afterForcedPick=()=>{
+    if(S.track==='gen' && S.examIndex===17 && S.examPath==='interview' && !S.interviewDone){
+      S.interviewDone=true;
+      const successChance=clamp(45+(S.social-50)*0.7,15,90);
+      if(chance(successChance)){ applyEff({social:3}); card('gold','面試結果公布','面試官對你的表現印象很好，錄取的把握又更大了一些。人際 <b class="up">+3</b>。'); }
+      else { applyEff({social:-2,energy:-2}); card('info','面試結果公布','面試表現不算特別亮眼，但備取也還有機會遞補。心裡有點忐忑。人際 <b class="dn">-2</b>，精力 <b class="dn">-2</b>。'); }
+      board();
+    }
+    if(S.examIndex===13 && S.inRelationship && !S.enteringHigh3BreakupDone){
+      S.enteringHigh3BreakupDone=true;
+      const ev=breakupCrisisEvent();
+      card('info',ev.title,ev.desc);
+      chooseForcedEvent(ev);
+      return;
+    }
+    if(checkConfessionTrigger()){
+      S.confessAskedGrade = S.examIndex<=6?1:(S.examIndex<=12?2:3);
+      const ev=confessEvent();
+      card('info',ev.title,ev.desc);
+      chooseForcedEvent(ev);
+      return;
+    }
+    const cycle=checkCoupleCycle();
+    if(cycle){
+      const ev = cycle==='breakup' ? breakupCrisisEvent() : coupleFightEvent();
+      if(cycle==='fight') S.coupleFightCount++;
+      card('info',ev.title,ev.desc);
+      chooseForcedEvent(ev);
+      return;
+    }
+    const sev=maybeSick();
+    if(sev){
+      S.sickCount++;
+      const decayMap={1:0.99,2:0.965,3:0.93};
+      S.study*=decayMap[sev]; S.social*=decayMap[sev];
+      board();
+    }
+    const ev= sev ? sickEvent(sev) : pickPoolEvent();
+    card('info',ev.title,ev.desc);
+    chooseForcedEvent(ev);
+  };
+  if(semStart){ semesterIntro(afterIntro); }
+  else afterIntro();
+}
+function afterEvent(){
+  const roll=rollPool();
+  let finalPool=roll.pool;
+  if(S.energy<=8){ finalPool=Math.max(3,finalPool-4); card('bad','過度疲勞','精力幾乎見底，這次能分配的時間點數變少了。'); }
+  allocPanel(finalPool,roll,(val)=>{ resolveExam(val);
+    if(S.examIndex%3===0){ semesterSummary(); }
+    setTimeout(()=>{
+      if(S.examIndex>=18){ endGame(); return; }
+      const brk=BREAK_AFTER[S.examIndex];
+      if(brk){
+        breakEvent(brk,()=>{
+          if(S.examIndex===12 && S.hasClub && S.hasJob && !S.summerBurnoutDone){
+            S.summerBurnoutDone=true;
+            summerBurnoutEvent(()=>nextExam());
+          } else {
+            nextExam();
+          }
+        });
+      }
+      else nextExam();
+    },50);
+  });
+}
+function semesterSummary(){
+  const semIdx=Math.ceil(S.examIndex/3);
+  const s3=S.scores.slice(-3);
+  const avg=Math.round(s3.reduce((a,b)=>a+b,0)/s3.length);
+  S.semAverages.push({sem:SEMN[semIdx-1],avg});
+  card('info',SEMN[semIdx-1]+' 學期總結',`這學期三次段考平均 <b class="hl">${avg}</b> 分。課業 ${Math.round(S.study)}／人際 ${Math.round(S.social)}／靈命 ${Math.round(S.faith)}／金錢 $${Math.round(S.money)}。`);
+}
+
+/* ===== 結局 ===== */
+const GEN_60_TIERS=[
+  {min:54,t:'頂尖國立大學熱門科系',d:'學測考出漂亮成績，落點分析上最理想的那幾間學校都摸得到。'},
+  {min:45,t:'優質國立大學／頂尖私立大學',d:'成績穩健，選校選系都有不錯的空間。'},
+  {min:35,t:'一般國立大學／優質私立大學',d:'不是最頂尖，但也交出了對得起自己的成績單。'},
+  {min:25,t:'一般私立大學／科系',d:'成績普通，還是能找到一個能安心念下去的科系。'},
+  {min:0,t:'落點不理想，考慮重考或分科測驗',d:'這次學測沒有考出理想的成績，未來的路要重新想一想。'}
+];
+const VOC_75_TIERS=[
+  {min:63,t:'頂尖科大龍頭系',d:'統測成績亮眼，龍頭科大的熱門系任你挑。'},
+  {min:52,t:'優質國立科大／私立科大熱門系',d:'成績不錯，能進到不錯的科大就讀理想科系。'},
+  {min:41,t:'一般國立科大／優質私立科大',d:'成績中規中矩，能順利銜接到四技校院。'},
+  {min:30,t:'四技二專／專科',d:'成績普通，還是務實地從四技或專科出發，累積專業技能吧。'},
+  {min:0,t:'考慮直接就業或重考',d:'統測沒有考出理想成績，也許直接帶著高職學到的技術投入職場累積實務經驗也是好選擇。'}
+];
+const FENKE_240_TIERS=[
+  {min:205,t:'頂尖頂級（台清交成政／台科北科）',d:'實力極度穩定，心態強大，靠分科測驗的難題展現鑑別度，逆轉拚出頂尖落點。'},
+  {min:170,t:'前段優質（中字輩／國立前段／明志）',d:'觀念清晰，高三下心態沒崩，靠分科測驗的專業科目補回學測的落差。'},
+  {min:135,t:'中段穩定（地名國立／逢甲輔仁／高科）',d:'基礎中等，這次分科測驗保住了國立大學或熱門私立科系的門票。'},
+  {min:95,t:'後段普通（一般私立大專校院）',d:'基本功較弱，分科測驗題目偏難，落點跟學測時相差不大。'},
+  {min:0,t:'建議重考或考慮就業',d:'不適應分科測驗的題型，也許轉戰實務職場或全面重考會是更好的選擇。'}
+];
+function scaleAndTier(raw0to100,mode){
+  const full = mode==='gen60'?60 : mode==='voc75'?75 : 240;
+  const tiers = mode==='gen60'?GEN_60_TIERS : mode==='voc75'?VOC_75_TIERS : FENKE_240_TIERS;
+  const scaled=Math.round(raw0to100/100*full);
+  const tier=tiers.find(t=>scaled>=t.min)||tiers[tiers.length-1];
+  return {scaled,full,tier};
+}
+function computePrelimGenScore(){
+  const avg=S.scores.length? S.scores.reduce((a,b)=>a+b,0)/S.scores.length : 0;
+  const raw=clamp(Math.round(avg*0.3+S.study*0.5+N0(8)),0,100);
+  return scaleAndTier(raw,'gen60').scaled;
+}
+function endGame(){
+  const avgStudy=S.scores.reduce((a,b)=>a+b,0)/S.scores.length;
+  const rawFinal=clamp(Math.round(avgStudy*0.3+S.study*0.5+N0(8)),0,100);
+  if(rawFinal-avgStudy>=15) traitCard('darkhorse','考運黑馬','平常表現普普，會考／統測當天卻超常發揮。');
+  if(S.skipCount===0 && S.everSkippedChurch===false && S.sickLeaveCount===0) traitCard('perfectattend','全勤生','三年幾乎沒有缺席過重要的事，連生病都是硬撐過去的。');
+  if(S.social<=25) traitCard('loner','邊緣人','三年下來，朋友圈始終沒有太熱鬧，但也習慣了自己的步調。');
+  checkTraits();
+  divider('畢業');
+
+  let label,scaled,full,tier;
+  if(S.track==='gen'){
+    if(S.examPath==='fenke'){
+      const raw2=clamp(Math.round(avgStudy*0.3+S.study*0.5+N0(10)),0,100);
+      ({scaled,full,tier}=scaleAndTier(raw2,'fenke240'));
+      label='分科測驗成績';
+    } else {
+      ({scaled,full,tier}=scaleAndTier(rawFinal,'gen60'));
+      label='學測成績';
+    }
+  } else {
+    ({scaled,full,tier}=scaleAndTier(rawFinal,'voc75'));
+    label='統測成績（75級分制對照）';
+  }
+
+  /* 1. 各學期平均成績 */
+  const semHtml=S.semAverages.map(s=>`${s.sem}：<b class="hl">${s.avg}</b> 分`).join('<br>');
+  card('info','三年六學期成績總覽',semHtml);
+
+  /* 2. 學測/統測/分科成績、升學管道 */
+  card('gold',label+'：'+scaled+' / '+full+' 級分',`${tier.d}<br><b class="hl">結果：${tier.t}</b>`);
+
+  /* 3. 獎項（含icon） */
+  const traitList=Object.values(S.traits);
+  let traitHtml = traitList.length
+    ? traitList.map(t=>`${t.icon} <b>${t.name}</b>　${t.desc}`).join('<br><br>')
+    : '（這三年過得很平穩，沒有特別突出的紀錄）';
+  card('info','三年隱藏紀錄',traitHtml);
+
+  try{
+    drawEndingCanvas({label,scaled,full,tier},traitList);
+  }catch(e){
+    /* 若瀏覽器不支援 canvas 繪圖，仍確保畢業流程完整結束 */
+    card('info','畢業結算圖','（此裝置無法產生結算圖片，但你的高中人生紀錄都在上面了。）');
+  }
+  renderRestartCard();
+}
+
+function drawEndingCanvas(result,traitList){
+  const W=760;
+  function roundRectPath(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  /* ---- Pass 1: 在暫存畫布上畫出「內容」，不含外框/橫幅，藉此量出真實高度 ---- */
+  const SCRATCH_H=2600;
+  const scratch=document.createElement('canvas'); scratch.width=W; scratch.height=SCRATCH_H;
+  const sc=scratch.getContext('2d');
+  const FX=14, RADIUS=18, CPAD=34;
+  const FW=W-FX*2;
+  const contentX=FX+CPAD;
+  const contentW=FW-CPAD*2;
+  const colGap=18;
+  const colW2=(contentW-colGap)/2;
+
+  function wrapLines(ctx,text,maxW){
+    const lines=[]; let line='';
+    for(const ch of text){
+      const test=line+ch;
+      if(ctx.measureText(test).width>maxW){ lines.push(line); line=ch; } else line=test;
+    }
+    if(line)lines.push(line);
+    return lines;
+  }
+  function drawLines(ctx,lines,x,y,lh){
+    lines.forEach((ln,i)=>ctx.fillText(ln,x,y+i*lh));
+    return y+lines.length*lh;
+  }
+
+  let y=30;
+
+  /* 1. 三年六學期成績總覽 */
+  sc.fillStyle='#2f9bf0'; sc.font='bold 15px sans-serif'; sc.fillText('三年六學期成績總覽',contentX,y+11); y+=30;
+  const gridCardY=y, gridInnerPadX=18, gridInnerPadY=20;
+  const colW3=(contentW-gridInnerPadX*2)/3;
+  const gridCardH=gridInnerPadY*2+32;
+  roundRectPath(sc,contentX,gridCardY,contentW,gridCardH,10);
+  sc.fillStyle='#ffffff'; sc.fill(); sc.strokeStyle='#d3e3f7'; sc.lineWidth=1; sc.stroke();
+  for(let col=0;col<3;col++){
+    const idx1=col*2, idx2=col*2+1;
+    const colX=contentX+gridInnerPadX+col*colW3;
+    const row1Y=gridCardY+gridInnerPadY+6, row2Y=row1Y+30;
+    if(S.semAverages[idx1]){
+      sc.fillStyle='#223047'; sc.font='13px sans-serif'; sc.fillText(S.semAverages[idx1].sem,colX,row1Y);
+      sc.fillStyle='#e6960a'; sc.font='bold 14px monospace'; sc.textAlign='right';
+      sc.fillText(S.semAverages[idx1].avg+' 分',colX+colW3-14,row1Y); sc.textAlign='left';
+    }
+    if(S.semAverages[idx2]){
+      sc.fillStyle='#223047'; sc.font='13px sans-serif'; sc.fillText(S.semAverages[idx2].sem,colX,row2Y);
+      sc.fillStyle='#e6960a'; sc.font='bold 14px monospace'; sc.textAlign='right';
+      sc.fillText(S.semAverages[idx2].avg+' 分',colX+colW3-14,row2Y); sc.textAlign='left';
+    }
+  }
+  y=gridCardY+gridCardH+26;
+
+  /* 2. 最終指標（左） + 學測/統測結果・升學管道（右） */
+  sc.font='13px sans-serif';
+  const tierLines=wrapLines(sc,result.tier.d,colW2-32);
+  const leftCardH=20+22+3*27+14+24+16;
+  const rightCardH=20+22+30+24+tierLines.length*19+16;
+  const row2H=Math.max(leftCardH,rightCardH);
+  const leftX=contentX, rightX=contentX+colW2+colGap;
+
+  roundRectPath(sc,leftX,y,colW2,row2H,12);
+  sc.fillStyle='#ffffff'; sc.fill(); sc.strokeStyle='#d3e3f7'; sc.lineWidth=1; sc.stroke();
+  let ly=y+20;
+  sc.fillStyle='#2f9bf0'; sc.font='bold 14px sans-serif'; sc.fillText('最終指標',leftX+18,ly+10); ly+=32;
+  const barW=colW2-18*2-56;
+  [['課業',S.study],['人際',S.social],['靈命',S.faith]].forEach(([n,v])=>{
+    sc.fillStyle='#223047'; sc.font='13px sans-serif'; sc.fillText(n,leftX+18,ly+11);
+    sc.fillStyle='#eaf4ff'; sc.fillRect(leftX+18+38,ly,barW,13);
+    sc.fillStyle='#ffb100'; sc.fillRect(leftX+18+38,ly,barW*clamp(v,0,100)/100,13);
+    sc.fillStyle='#223047'; sc.font='12px monospace'; sc.textAlign='right';
+    sc.fillText(Math.round(v),leftX+colW2-18,ly+11); sc.textAlign='left';
+    ly+=27;
+  });
+  ly+=8;
+  sc.fillStyle='#223047'; sc.font='13px sans-serif'; sc.fillText('金錢',leftX+18,ly+11);
+  sc.fillStyle='#12b886'; sc.font='bold 15px monospace'; sc.fillText('$'+Math.round(S.money),leftX+18+38,ly+13);
+
+  roundRectPath(sc,rightX,y,colW2,row2H,12);
+  sc.fillStyle='#ffffff'; sc.fill(); sc.strokeStyle='#d3e3f7'; sc.lineWidth=1; sc.stroke();
+  let ry=y+20;
+  sc.fillStyle='#2f9bf0'; sc.font='bold 14px sans-serif'; sc.fillText(result.label+'・升學管道',rightX+18,ry+10); ry+=34;
+  sc.fillStyle='#e6960a'; sc.font='bold 24px sans-serif'; sc.fillText(result.scaled+' / '+result.full+' 級分',rightX+18,ry+10); ry+=34;
+  sc.fillStyle='#223047'; sc.font='bold 14px sans-serif'; sc.fillText(result.tier.t,rightX+18,ry+8); ry+=24;
+  sc.fillStyle='#72839f'; sc.font='13px sans-serif';
+  drawLines(sc,tierLines,rightX+18,ry+8,19);
+
+  y+=row2H+26;
+
+  /* 3. 三年隱藏紀錄（獎項卡） */
+  sc.fillStyle='#2f9bf0'; sc.font='bold 15px sans-serif'; sc.fillText('三年隱藏紀錄（'+traitList.length+' 項）',contentX,y+11); y+=30;
+  if(traitList.length===0){
+    roundRectPath(sc,contentX,y,contentW,60,10);
+    sc.fillStyle='#ffffff'; sc.fill(); sc.strokeStyle='#d3e3f7'; sc.lineWidth=1; sc.stroke();
+    sc.fillStyle='#72839f'; sc.font='13px sans-serif'; sc.fillText('（過得很平穩，沒有特別突出的紀錄）',contentX+18,y+34);
+    y+=60;
+  } else {
+    const rows=Math.ceil(traitList.length/2);
+    const traitDescLines=traitList.map(t=>wrapLines(sc,t.desc,colW2-46));
+    for(let r=0;r<rows;r++){
+      const li=r*2, ri=r*2+1;
+      const llines=traitDescLines[li]||[];
+      const rlines=ri<traitList.length?traitDescLines[ri]:[];
+      const rowH=44+Math.max(llines.length,rlines.length,1)*17+8;
+      [ [li,leftX], ri<traitList.length?[ri,rightX]:null ].forEach(pair=>{
+        if(!pair)return;
+        const [idx,cx]=pair;
+        const t=traitList[idx];
+        roundRectPath(sc,cx,y,colW2,rowH,10);
+        sc.fillStyle='#ffffff'; sc.fill(); sc.strokeStyle='#d3e3f7'; sc.lineWidth=1; sc.stroke();
+        sc.font='18px sans-serif'; sc.fillText(t.icon,cx+16,y+26);
+        sc.fillStyle='#0f9c73'; sc.font='bold 14px sans-serif'; sc.fillText(t.name,cx+44,y+26);
+        sc.fillStyle='#72839f'; sc.font='12px sans-serif';
+        drawLines(sc,traitDescLines[idx],cx+16,y+46,17);
+      });
+      y+=rowH+12;
+    }
+  }
+  y+=10;
+  sc.fillStyle='#a7b4c9'; sc.font='11px monospace'; sc.fillText('共走過 18 次段考 ・ SchoolLife v1.0',contentX,y+8);
+  y+=26;
+  const contentH=y;
+
+  /* ---- Pass 2: 正式畫布，畫外框、橫幅，再貼上內容 ---- */
+  const FY=14;
+  const bannerH=178;
+  const H=FY+bannerH+contentH+FX;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const c=cv.getContext('2d');
+  c.fillStyle='#eaf4ff'; c.fillRect(0,0,W,H);
+
+  c.save();
+  roundRectPath(c,FX,FY,FW,H-FY-FX,RADIUS);
+  c.clip();
+  c.fillStyle='#ffffff'; c.fillRect(FX,FY,FW,H-FY-FX);
+  const grad=c.createLinearGradient(0,FY,0,FY+bannerH);
+  grad.addColorStop(0,'#3fa9ff'); grad.addColorStop(1,'#2f7de0');
+  c.fillStyle=grad; c.fillRect(FX,FY,FW,bannerH);
+  c.textAlign='center';
+  c.fillStyle='#ffe27a'; c.font='bold 15px sans-serif'; c.fillText('SCHOOLLIFE · 畢業成績單',W/2,FY+48);
+  c.fillStyle='#ffffff'; c.font='bold 36px sans-serif'; c.fillText(S.name,W/2,FY+94);
+  c.fillStyle='#ffffffcc'; c.font='14px sans-serif';
+  c.fillText(TRACKN[S.track]+' ・ '+PERN[S.per]+' ・ '+(S.classType||''),W/2,FY+128);
+  c.textAlign='left';
+  c.drawImage(scratch,0,0,W,contentH,0,FY+bannerH,W,contentH);
+  c.restore();
+
+  c.strokeStyle='#aed4f8'; c.lineWidth=3;
+  roundRectPath(c,FX,FY,FW,H-FY-FX,RADIUS); c.stroke();
+  c.strokeStyle='#3fa9ff'; c.lineWidth=1.5;
+  roundRectPath(c,FX+7,FY+7,FW-14,H-FY-FX-14,RADIUS-6); c.stroke();
+
+  const url=cv.toDataURL('image/png');
+  const fileName='高中人生結算_'+S.name+'.png';
+  card('','','');
+  const out=$('log').lastElementChild;
+  out.className='card';
+  out.innerHTML=`<h4>畢業結算圖</h4><img src="${url}" style="width:100%;border-radius:8px" alt="結算圖">
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn main" id="sh-save" style="flex:1">💾 儲存 / 分享圖片</button>
+      <button class="btn" id="sh-dl" style="flex:1">下載到裝置</button>
+    </div>`;
+  out.querySelector('#sh-dl').onclick=()=>{ const a=document.createElement('a'); a.href=url; a.download=fileName;
+    document.body.appendChild(a); a.click(); a.remove(); };
+  out.querySelector('#sh-save').onclick=async()=>{
+    try{
+      const blob=await (await fetch(url)).blob();
+      const file=new File([blob],fileName,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'高中人生結算',text:S.name+' 的高中人生'});
+        return;
+      }
+    }catch(e){ if(e&&e.name==='AbortError')return; }
+    const a=document.createElement('a'); a.href=url; a.download=fileName;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  $('act').style.display='none';
+  scrollBottom();
+}
+function restartGame(){
+  $('log').innerHTML='';
+  $('act').innerHTML=''; $('act').style.display='none';
+  $('board').style.display='none';
+  $('in-name').value='';
+  SEED=Math.random().toString(36).slice(2,10);
+  $('start').style.display='';
+  window.scrollTo(0,0);
+}
+function renderRestartCard(){
+  const el=document.createElement('div');
+  el.className='card';
+  el.innerHTML=`<button class="btn main" id="btn-restart-life">🔄 重新開始我的高中人生</button>`;
+  $('log').appendChild(el);
+  el.querySelector('#btn-restart-life').onclick=restartGame;
+  scrollBottom();
+}
+
+/* ===== 開場互動 ===== */
+let selTrack='gen', selPer='study';
+document.querySelectorAll('#seg-track button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#seg-track button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); selTrack=b.dataset.v;
+});
+document.querySelectorAll('#seg-per button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#seg-per button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); selPer=b.dataset.v;
+  if(selPer==='job'){ /* 打工型直接起始有工作 */ }
+});
+$('btn-start').onclick=()=>{
+  const nm=$('in-name').value.trim()||'陳小美';
+  seedInit(SEED);
+  S=newState(nm,selTrack,selPer);
+  if(selPer==='job'){ S.hasJob=true; S.jobName=pick(['手搖飲店','超商','早餐店']); S.usedPoolIds.push('jobOffer'); }
+  $('start').style.display='none';
+  $('board').style.display=''; $('act').style.display='';
+  board();
+  card('info','入學',`${TRACKN[selTrack]}生活正式開始。${S.name}，接下來的三年、18 次段考，怎麼過是你的選擇。`);
+  nextExam();
+};
+</script>
+</body>
+</html>

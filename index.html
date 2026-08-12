@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#eaf4ff">
 <title>HighSchoolLife - 高中人生產生器</title>
-<meta name="description" content="18 次段考，三年的時間分配練習。課業、人際、靈命、金錢，每一次選擇都算數。">
+<meta name="description" content="三年六學期，設定目標、期末衝刺的時間分配練習。課業、人際、靈命、金錢，每一次選擇都算數。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect x=%224%22 y=%226%22 width=%2224%22 height=%2220%22 rx=%222%22 fill=%22%23ffb100%22/%3E%3Cline x1=%228%22 y1=%2212%22 x2=%2224%22 y2=%2212%22 stroke=%22%23ffffff%22 stroke-width=%221.5%22/%3E%3Cline x1=%228%22 y1=%2217%22 x2=%2220%22 y2=%2217%22 stroke=%22%23ffffff%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 #bd-name{font-family:var(--disp);font-weight:600;font-size:17px;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
 #bd-name small{color:#ffffffb0;font-weight:400;font-size:12px;margin-left:6px;font-family:var(--sans)}
 #bd-tag{color:#ffe27a;font-size:12px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
-#examstrip{display:grid;grid-template-columns:repeat(18,1fr);gap:2px;margin-top:8px}
+#examstrip{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:8px}
 .exbox{height:9px;border-radius:2px;background:#ffffff33;border:1px solid #ffffff40}
 .exbox.done{background:#ffe27a;border-color:#ffe27a}
 .exbox.now{background:#fff;border-color:#fff}
@@ -40,6 +40,12 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 #nrg{margin-top:7px;display:flex;align-items:center;gap:8px;font-size:11px;color:#ffffffcc;letter-spacing:.1em}
 #nrg .bar{flex:1;height:6px;background:#ffffff2e;border-radius:3px;overflow:hidden;border:1px solid #ffffff40}
 #nrg .bar i{display:block;height:100%;background:linear-gradient(90deg,#ff8a80,#ffe27a,#7CFFC4);border-radius:3px}
+#substats{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.substat-chip{background:#ffffff22;border:1px solid #ffffff38;border-radius:20px;padding:3px 10px;
+  font-size:11px;color:#ffffffe0;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.substat-chip b{font-family:var(--mono);color:#ffe27a;font-weight:700}
+.substat-chip.low{border-color:#ff8a8088;background:#ff8a8022}
+.substat-chip.low b{color:#ffb3ab}
 /* ---------- 主紀錄 ---------- */
 #log{flex:1;padding:14px 14px 20px;display:flex;flex-direction:column;gap:10px}
 .card{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:12px 14px;
@@ -151,7 +157,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
     <div class="badge" style="display:flex;align-items:center;justify-content:center;font-size:26px">🎒</div>
     <h1>SchoolLife<br><em>高中人生產生器</em></h1>
     <div id="ver-badge">v1.0</div>
-    <p class="sub">三年、18 次段考 → 課業・人際・靈命・金錢，時間永遠不夠用，怎麼分配是你的選擇。</p>
+    <p class="sub">三年六學期，每學期期初設目標、期末拚衝刺 → 課業・人際・靈命・金錢，時間永遠不夠用，怎麼分配是你的選擇。</p>
     <div class="field"><label>你的名字</label><input id="in-name" maxlength="10" placeholder="例如：陳小美" value=""></div>
     <div class="field"><label>學制</label>
       <div class="seg" id="seg-track">
@@ -180,6 +186,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
       <div class="bd-cell"><b id="bd-money">0</b><span>金錢</span></div>
     </div>
     <div id="nrg"><span>精力</span><div class="bar"><i id="nrg-bar" style="width:70%"></i></div><span id="nrg-val">70</span></div>
+    <div id="substats"></div>
   </header>
   <main id="log"></main>
   <footer id="act" style="display:none"></footer>
@@ -233,7 +240,27 @@ function newState(name,track,per){
     cumJobPoints:0, skipCount:0, licenseCount:0, internshipGood:0, churchFull:true, everSkippedChurch:false,
     usedPoolIds:[], traits:{}, log:[], semAverages:[], cheapCount:0, coupleFightCount:0, confessAskedGrade:0,
     clubDeclineCount:0, jobDeclineCount:0, summerBurnoutDone:false, keptBusyIntoHighSchool:false,
-    enteringHigh3BreakupDone:false, sickCount:0, sickLeaveCount:0, examPath:null, interviewDone:false
+    enteringHigh3BreakupDone:false, sickCount:0, sickLeaveCount:0, examPath:null, interviewDone:false,
+    sprintActive:false, danceDone:false, showcaseDone:false, farewellDone:false,
+    /* 人際子數值（0-10） */
+    loveScore:5, clubScore:0, familyScore:5,
+    crushActive:false,
+    /* 社團幹部/社長 */
+    clubOfficer:false, clubPresident:false, officerOffered:false, presidentOffered:false, clubSwitchOffered:false,
+    /* 打工升遷 */
+    jobScore:0, jobTier:0, jobPromoteOffered:false, jobManagerOffered:false,
+    /* 服事崗位 */
+    serviceScore:0, serviceTier:0, serviceRole1Offered:false, serviceRole2Offered:false,
+    /* 死當/留級/退學 */
+    lowStudyStreak:0, heldBack:false, expelled:false, lowStudyCheckpoints:0,
+    /* 寒暑假門徒營追蹤（生命翻轉成就） */
+    discCampEveryBreak:true,
+    /* 繁星計畫 */
+    starOffered:false, starTaken:false,
+    /* 高三上寒假結束 提早結局 */
+    earlyEnd:false,
+    /* 固定好友角色 */
+    friend1Name:pick(['子晴','翊丞','詩涵','小宇']), friend2Name:pick(['阿凱','語彤','承恩','雨薇'])
   };
 }
 let S;
@@ -250,11 +277,10 @@ function divider(t){
   const el=document.createElement('div'); el.className='divider'; el.textContent=t;
   $('log').appendChild(el); scrollBottom();
 }
-function ordinalCN(n){ return ['第一次','第二次','第三次'][n-1]||''; }
 function examLabel(){
-  const semIdx=Math.min(6,Math.max(1,Math.ceil(S.examIndex/3)));
-  const ord=((S.examIndex-1)%3)+1;
-  return SEMN[semIdx-1]+' '+ordinalCN(ord)+'段考';
+  const semIdx=Math.min(6,Math.max(1,Math.ceil(S.examIndex/2)));
+  const isEnd=S.examIndex%2===0;
+  return SEMN[semIdx-1]+' '+(isEnd?'期末':'期初');
 }
 function board(){
   $('bd-study').textContent=Math.round(S.study);
@@ -264,12 +290,19 @@ function board(){
   $('nrg-val').textContent=Math.round(S.energy);
   $('nrg-bar').style.width=clamp(S.energy,0,100)+'%';
   const strip=$('examstrip'); strip.innerHTML='';
-  for(let i=1;i<=18;i++){
+  for(let i=1;i<=12;i++){
     const d=document.createElement('div');
     d.className='exbox'+(i<S.examIndex?' done':i===S.examIndex?' now':'');
     strip.appendChild(d);
   }
   $('bd-tag').textContent=(S.examIndex? examLabel() : '');
+  const chips=[];
+  chips.push({icon:'🏠',label:'家庭',val:S.familyScore});
+  if(S.crushActive||S.inRelationship) chips.push({icon:'💘',label:'感情',val:S.loveScore});
+  if(S.hasClub) chips.push({icon:'🎪',label:S.clubPresident?'社團(社長)':S.clubOfficer?'社團(幹部)':'社團',val:S.clubScore});
+  if(S.hasJob) chips.push({icon:'💼',label:S.jobTier>=2?'打工(主管)':S.jobTier===1?'打工(正職)':'打工',val:S.jobScore});
+  chips.push({icon:'🙏',label:S.serviceTier>=2?'服事(組長)':S.serviceTier===1?'服事':'服事',val:S.serviceScore});
+  $('substats').innerHTML=chips.map(c=>`<div class="substat-chip${c.val<5?' low':''}">${c.icon} ${c.label} <b>${c.val.toFixed(1)}</b>/10</div>`).join('');
 }
 function act(html){
   $('act').innerHTML=`<div id="act-handle">▾ 收合</div><div id="act-body">${html}</div>`;
@@ -305,7 +338,8 @@ function applyEff(eff){
 }
 const TRAIT_ICON={bookworm:'📚',popular:'❄️',faithful:'✝️',brokewallet:'👛',workhard:'💪',
   burntout:'🕯️',teammate:'🤝',freeloader:'💣',danceleader:'💃',inlove:'🐶',
-  internstar:'🔧',licensepro:'📜',darkhorse:'🐎',perfectattend:'🏅',loner:'🌫️',cheap:'🪙',single:'👑',richking:'💰',daiyu:'🥀'};
+  internstar:'🔧',licensepro:'📜',darkhorse:'🐎',perfectattend:'🏅',loner:'🌫️',cheap:'🪙',single:'👑',richking:'💰',daiyu:'🥀',
+  lifechange:'🕊️',tightrope:'⚖️',president:'🎖️',jobmanager:'👔',groupleader:'🎶'};
 function traitCard(key,name,desc){
   if(S.traits[key])return;
   const icon=TRAIT_ICON[key]||'⭐';
@@ -336,9 +370,8 @@ function runSteps(steps,cont){
   if(!steps.length){ cont(); return; }
   steps[0](()=>runSteps(steps.slice(1),cont));
 }
-function semesterIntro(cont){
-  const semIdx=Math.ceil(S.examIndex/3); // 1..6
-  if(semIdx>=1 && semIdx<=6) divider(SEMN[semIdx-1]);
+function semesterIntro(semIdx,cont){
+  divider(SEMN[semIdx-1]);
   const steps=[];
   if(semIdx<=4){ /* 高三不再詢問加入社團/打工，避免剛退出又被問的怪異感 */
     if(!S.hasClub && S.clubDeclineCount<2) steps.push(clubAskStep);
@@ -349,8 +382,17 @@ function semesterIntro(cont){
 }
 function semesterFixedContent(semIdx,cont){
   if(semIdx===1){
-    card('info','開學日',`${S.name}走進教室，新的三年正式開始。`);
-    cont();
+    card('info','開學日',`${S.name}走進教室，黑板上還留著前一屆學長姐的塗鴉，空氣裡飄著油漆跟新課本的味道。找到寫著自己名字的座位坐下，新的三年，正式開始。`);
+    card('info','分班座位表',`導師拿著座位表念到你的名字，示意你坐到教室中段的位置。轉頭一看，旁邊的座位上，坐著一個看起來也有點緊張的同學——桌牌上寫著「${S.friend1Name}」。`);
+    choose('要不要主動跟同桌打招呼？',[
+      {t:'主動攀談，先自我介紹',s:'人際 +，可能為這三年的友情打下基礎',main:true,f:()=>{
+          applyEff({social:3});
+          card('good','第一次對話',`你鼓起勇氣，先開口說了聲「嗨，我是${S.name}」。${S.friend1Name}愣了一下，隨即露出鬆一口氣的笑容，兩人很快就聊開了，從早自習的無聊，聊到昨晚沒看完的漫畫。誰也沒想到，這個隨機分配的座位，會變成接下來三年最熟悉的風景。人際 <b class="up">+3</b>。`);
+          board(); cont(); }},
+      {t:'安靜坐著，等對方先開口',f:()=>{
+          card('info','沉默的開學日',`你低頭整理著新課本，沒有主動搭話。${S.friend1Name}也安安靜靜地坐在一旁，兩人就這樣各自沉默了一整個早自習。不過下課鐘一響，${S.friend1Name}忽然轉頭問你借了枝筆，這段緣分，還是這樣悄悄開始了。`);
+          cont(); }}
+    ]);
   } else if(semIdx===2){
     choose('班聯會 / 幹部改選要不要參一咖？',[
       {t:'參選幹部',s:'人際 +、精力 -，需要多花心力辦事',main:true,f:()=>{ applyEff({social:6,energy:-6}); card('good','幹部改選',`當選了班上幹部，人際 <b class="up">+6</b>，但要多花心力辦活動，精力 <b class="dn">-6</b>。`); board(); cont(); }},
@@ -372,6 +414,21 @@ function semesterFixedContent(semIdx,cont){
     card('info','校慶倒數','再過三週就是一年一度的校慶，班上要出一支全班舞蹈。這件事，這學期躲不掉。');
     cont();
   } else if(semIdx===5){
+    const early8=S.scores.slice(0,8);
+    const avg8=early8.length? early8.reduce((a,b)=>a+b,0)/early8.length : 0;
+    if(avg8>=70 && !S.starOffered){
+      S.starOffered=true;
+      card('gold','繁星計畫','最近到了繁星推薦甄選的時間——你高一到高二的段考表現一直很穩定，導師主動找你，問要不要用繁星資格申請大學。');
+      choose('要不要申請繁星？',[
+        {t:'申請繁星，提前定案',s:'直接以繁星資格畢業，跳過學測/分科壓力',main:true,f:()=>{ S.starTaken=true; card('gold','決定申請','決定用繁星資格申請，穩紮穩打的高一高二總算派上用場。'); board(); cont(); }},
+        {t:'不申請，賭一把學測拚更好的學校',f:()=>{ card('info','決定放手一搏','覺得自己還有機會拚更好的學校，決定不用繁星資格，全力衝刺學測。'); cont(); }}
+      ]);
+      return;
+    }
+    if(!S.starOffered){
+      S.starOffered=true;
+      card('bad','繁星機會擦身而過','最近到了繁星申請的時間，但你因為高一到高二的期中考表現實在差強人意，只能眼睜睜看著同學早一步拿到大學資格開始放暑假了。');
+    }
     if(S.track==='gen'){
       card('exam','高三上','學測倒數計時開始跳動，模擬考一場接一場。');
     } else {
@@ -409,65 +466,66 @@ function semesterFixedContent(semIdx,cont){
 
 /* ===== 事件池 ===== */
 function reportEvent(){
-  return {id:'report',title:'分組報告',cond:()=>S.examIndex<13,
-    desc:'課堂分組報告，組員各有各的算盤，這次你想怎麼扮演自己的角色？',
+  return {id:'report',title:'分組報告',cond:()=>S.examIndex<9,
+    desc:'台上老師剛把分組名單念完，你們這組已經圍成一圈，開始小聲討論題目方向。有人立刻拿出筆記本畫分工表，也有人已經在滑手機神遊，眼神完全沒有對到焦。這份報告，你想在裡面扮演什麼角色？',
     choices:[
       {t:'主動扛下大部分',s:'課業 +、人際 +（隊友感謝），精力 -，但可能爆肝',main:true,
         f:()=>{ S.reportHelp++;
-          if(chance(75)){ applyEff({study:4,social:3,energy:-5}); card('good','分組報告',`你把報告扛下來，熬夜整理到很晚。課業 <b class="up">+4</b>、人際 <b class="up">+3</b>，精力 <b class="dn">-5</b>。`); }
-          else { applyEff({study:1,social:3,energy:-11}); card('bad','分組報告 爆肝','為了報告熬夜到快天亮，隔天上課根本在放空，讀書效率大打折扣。人際 <b class="up">+3</b>，精力 <b class="dn">-11</b>。'); }
+          if(chance(75)){ applyEff({study:4,social:3,energy:-5}); card('good','分組報告',`你把整份報告攬了下來，晚上熬夜查資料、排版、順稿到快十二點。上台那天，組員在台下對你比了個大拇指，報告也順利過關。課業 <b class="up">+4</b>、人際 <b class="up">+3</b>，精力 <b class="dn">-5</b>。`); }
+          else { applyEff({study:1,social:3,energy:-11}); card('bad','分組報告 爆肝','為了報告熬夜到快天亮，隔天上課整個人恍神，連自己講了什麼都記不清楚。組員雖然感激，但你這幾天完全提不起讀書的力氣。人際 <b class="up">+3</b>，精力 <b class="dn">-11</b>。'); }
           board(); }},
-      {t:'平均分工，各做各的',s:'小幅課業 +',f:()=>{ applyEff({study:2}); card('info','分組報告','大家平均分工，報告普普通通地交出去了。'); board(); }},
+      {t:'平均分工，各做各的',s:'小幅課業 +',f:()=>{ applyEff({study:2}); card('info','分組報告','大家各自認領一部分，開了一次線上會議兜起來，報告不驚艷但也算完整地交出去了。'); board(); }},
       {t:'能拖就拖，交給別人',s:'人際 -，精力 +',warn:true,
-        f:()=>{ applyEff({social:-4,energy:3}); S.reportSlack++; card('bad','分組報告',`你這次選擇擺爛，組員在群組裡的訊息已讀不回你。人際 <b class="dn">-4</b>。`); board(); }}
+        f:()=>{ applyEff({social:-4,energy:3}); S.reportSlack++; card('bad','分組報告',`你隨口說了句「隨便交交就好」，就沒再回過群組訊息。上台那天你連自己負責的那頁投影片都沒打開過，組員在台下的臉色，你不敢看。人際 <b class="dn">-4</b>。`); board(); }}
     ]};
 }
 function drinkEvent(){
-  const canTreat = S.money>=200 || S.social>=65;
+  const canTreat = S.money>=200 || S.familyScore>=6;
   const choices=[];
   if(canTreat){
     choices.push({t:'主動請客，幫大家出錢',s:'人際 +多、金錢 -多，但有機會出意外',main:true,
       f:()=>{
-        const sponsored = S.money<200 && S.social>=65;
+        const sponsored = S.money<200 && S.familyScore>=6;
         if(chance(70)){ applyEff({social:6,money:sponsored?0:-200});
-          card('good','手搖飲揪團', sponsored?'荷包不太夠，好在爸媽多塞了點零用錢，大家還是喝得很開心。人際 <b class="up">+6</b>。':'大家喝得很開心，直呼你夠意思。人際 <b class="up">+6</b>，金錢 <b class="dn">-200</b>。'); }
+          card('good','手搖飲揪團', sponsored?'荷包不太夠，好在跟爸媽開口，他們二話不說多塞了點零用錢。飲料一手一手發下去，同學們喝著手搖飲、聊著最近的八卦，教室裡難得這麼熱鬧。人際 <b class="up">+6</b>。':'一口氣點了全班的份，飲料店阿姨都被你嚇到。大家喝得很開心，直呼你夠意思，這個綽號大概會被記到畢業。人際 <b class="up">+6</b>，金錢 <b class="dn">-200</b>。'); }
         else { applyEff({social:1,money:sponsored?0:-220,energy:-6});
-          card('bad','飲料出包', sponsored?'錢是爸媽出的，結果飲料還壞掉了，大家鬧肚子……人際只有 <b class="up">+1</b>，精力 <b class="dn">-6</b>。':'沒想到飲料放太久壞掉了，好幾個人喝完鬧肚子，你也不例外……人際只有 <b class="up">+1</b>，還多花了看醫生的錢，精力 <b class="dn">-6</b>。'); }
+          card('bad','飲料出包', sponsored?'錢是爸媽出的，結果飲料放在教室後面一整個下午，喝下去的人接連跑廁所，你也沒能倖免……人際只有 <b class="up">+1</b>，精力 <b class="dn">-6</b>。':'沒想到飲料放太久壞掉了，好幾個人喝完鬧肚子在保健室排隊，你也不例外，肚子絞痛了一整個晚自習……人際只有 <b class="up">+1</b>，還多花了看醫生的錢，精力 <b class="dn">-6</b>。'); }
         board(); }});
   }
   choices.push({t:'跟，自己出錢就好',s:'人際 +、金錢 -50',f:()=>{
       const free = S.money<50;
       if(free) S.cheapCount++;
       if(chance(85)){ applyEff({social:3,money:free?0:-50});
-        card('good','手搖飲揪團', free?'錢不太夠，厚著臉皮讓同學先幫忙出，跟著喝了一杯。人際 <b class="up">+3</b>。':'跟著點了一杯，順便跟同學聊了一下。人際 <b class="up">+3</b>，金錢 <b class="dn">-50</b>。'); }
-      else { applyEff({social:1,money:free?0:-50,energy:-4}); card('bad','手搖飲揪團','飲料好像放比較久，喝完有點反胃。精力 <b class="dn">-4</b>。'); }
+        card('good','手搖飲揪團', free?'錢包空空，只好厚著臉皮跟旁邊同學說「先幫我出一下」，對方也笑笑地答應了。跟著喝了一杯，順便聊了聊最近的煩心事。人際 <b class="up">+3</b>。':'跟著點了一杯微糖去冰，跟同學排隊等飲料的空檔聊了不少廢話，小小的日常，卻讓這天多了點色彩。人際 <b class="up">+3</b>，金錢 <b class="dn">-50</b>。'); }
+      else { applyEff({social:1,money:free?0:-50,energy:-4}); card('bad','手搖飲揪團','飲料好像放比較久，喝完沒多久就開始反胃，整節課都在忍耐，完全沒心思聽課。精力 <b class="dn">-4</b>。'); }
       board(); }});
-  choices.push({t:'省錢，不跟',s:'金錢 +',f:()=>{ card('info','手搖飲揪團','忍住手癢，把飲料錢省下來。'); }});
-  return {id:'drink',title:'手搖飲揪團',desc:'班群裡有人在揪手搖飲團購，要不要跟，甚至幫大家出錢？',choices};
+  choices.push({t:'省錢，不跟',s:'金錢 +',f:()=>{ card('info','手搖飲揪團','群組裡的訊息一直跳，你看了一眼，還是把手機收進抽屜，繼續盯著眼前的講義，忍住了手癢。'); }});
+  return {id:'drink',title:'手搖飲揪團',desc:`${S.friend1Name}在班群裡揪手搖飲團購，貼圖跟「+1」洗版洗了整整十分鐘，要不要跟，甚至幫大家出錢？`,choices};
 }
 function sickEvent(severity){
   severity=severity||1;
   const tag=severity>=3?'重感冒':severity===2?'感冒':'小感冒';
-  const desc=severity>=2?'最近精力透支，免疫力下滑，鼻塞、咳嗽、發燒接踵而來。':'鼻塞加咳嗽，這幾天身體不太舒服。';
+  const desc=severity>=3?'這幾天精力已經透支很久，免疫力像洩了氣的皮球，一早起床喉嚨就像吞了刀片，體溫計顯示三十八度五，全身痠痛到連翻身都費力。':severity===2?'鼻塞、咳嗽、發燒接踵而來，晚上睡覺呼吸都不順，白天上課眼皮一直打架，桌上的衛生紙已經堆成一座小山。':'鼻塞加咳嗽，喉嚨癢癢的，這幾天身體不太舒服，說話都覺得有點吃力。';
   const pushE=severity>=3?-15:severity===2?-11:-8;
   const pushStudy=severity>=3?-6:severity===2?-3:-1;
   const restE=severity>=3?9:severity===2?7:5;
   const restStudy=severity>=3?-5:severity===2?-3:-1;
   return {id:'sick',title:tag+'了',desc,
     choices:[
-      {t:'硬撐去上課',warn:true,f:()=>{ applyEff({energy:pushE,study:pushStudy}); card('bad',tag+'硬撐',`硬撐著去上課，整天昏昏沉沉，讀書效率也差。精力 <b class="dn">${pushE}</b>${pushStudy?`，課業 <b class="dn">${pushStudy}</b>`:''}。`); board(); }},
-      {t:'請假在家休息',main:severity>=2,f:()=>{ applyEff({energy:restE,study:restStudy}); S.sickLeaveCount++; card('info',tag+'請假',`在家休息，精力 <b class="up">+${restE}</b>，但也少上了幾堂課，課業 <b class="dn">${restStudy}</b>。`); board(); }}
+      {t:'硬撐去上課',warn:true,f:()=>{ applyEff({energy:pushE,study:pushStudy}); card('bad',tag+'硬撐',`還是揹起書包去了學校，一整天昏昏沉沉，黑板上的字看起來都在飄，下課趴在桌上完全不想動。放學回家後直接倒在床上睡到隔天。精力 <b class="dn">${pushE}</b>${pushStudy?`，課業 <b class="dn">${pushStudy}</b>`:''}。`); board(); }},
+      {t:'請假在家休息',main:severity>=2,f:()=>{ applyEff({energy:restE,study:restStudy}); S.sickLeaveCount++; card('info',tag+'請假',`跟導師請了假，在家喝溫水、蓋著被子睡了一整天，精力 <b class="up">+${restE}</b>，但也錯過了幾堂課的進度，課業 <b class="dn">${restStudy}</b>。`); board(); }}
     ]};
 }
 function friendFightEvent(){
+  const n=S.friend1Name;
   return {id:'fight',title:'跟好朋友吵架了',
-    desc:'因為一件小事，跟最好的朋友鬧翻了，氣氛整天都很僵。',
+    desc:`因為一件說大不大、說小不小的事，你跟${n}起了爭執，兩人在走廊上把話說重了，各自甩頭走開。整個下午，教室裡的空氣都跟平常不一樣，你們刻意坐得很遠，連眼神都不對到。`,
     choices:[
       {t:'主動先道歉、和好',s:'人際 +，但對方心情難預料',main:true,f:()=>{
-          if(chance(75)){ applyEff({social:5}); card('good','和好','鼓起勇氣先開口，兩人和好如初。人際 <b class="up">+5</b>。'); }
-          else { applyEff({social:1}); card('info','和好 未竟','鼓起勇氣道歉，但對方好像還在氣頭上，只勉強回應了一下。人際只有小幅 <b class="up">+1</b>。'); }
+          if(chance(75)){ applyEff({social:5}); card('good','和好',`放學後鼓起勇氣走過去，說了句「對不起，是我不對」。${n}愣了一下，接著笑了出來，兩人和好如初，晚上還一起走去買了消夜當作和解禮。人際 <b class="up">+5</b>。`); }
+          else { applyEff({social:1}); card('info','和好 未竟',`鼓起勇氣道歉，${n}卻只是「嗯」了一聲，眼神還是有點迴避。看得出來氣還沒消，這次的破冰只做了一半。人際只有小幅 <b class="up">+1</b>。`); }
           board(); }},
-      {t:'先冷戰，看對方會不會先低頭',s:'人際 -',f:()=>{ applyEff({social:-5}); card('bad','冷戰','兩人幾天沒說話，教室的空氣有點尷尬。人際 <b class="dn">-5</b>。'); board(); }}
+      {t:'先冷戰，看對方會不會先低頭',s:'人際 -',f:()=>{ applyEff({social:-5}); card('bad','冷戰',`兩人幾天沒說話，中午吃飯也刻意分開坐。教室裡少了平常${n}的打鬧聲，那種尷尬的沉默，比吵架本身更難受。人際 <b class="dn">-5</b>。`); board(); }}
     ]};
 }
 function churchCampEvent(){
@@ -490,48 +548,58 @@ function phoneEvent(){
 }
 function familyEvent(){
   return {id:'family',title:'家人拿成績單念',cond:()=>{ const last=S.scores[S.scores.length-1]; return last===undefined||last<75; },
-    desc:'爸媽看到最近的成績，忍不住念了幾句。',
+    desc:'成績單放在餐桌上，媽媽掃了一眼分數，筷子停在半空中，欲言又止了幾秒，最後還是忍不住開口：「這次是怎麼回事？」爸爸也在旁邊放下手機，一家人的晚餐氣氛瞬間降到冰點。',
     choices:[
-      {t:'認真溝通，說明自己的規劃',s:'人際 +、精力 -小',f:()=>{ applyEff({social:2,energy:-2}); card('good','家庭溝通','好好跟爸媽聊了一下自己的想法，氣氛緩和不少。'); board(); }},
-      {t:'不耐煩地頂回去',s:'人際 -',warn:true,f:()=>{ applyEff({social:-4}); card('bad','家庭衝突','忍不住頂了幾句，家裡氣氛冷了整晚。人際 <b class="dn">-4</b>。'); board(); }}
+      {t:'認真溝通，說明自己的規劃',s:'人際 +、家庭 +、精力 -小',f:()=>{ applyEff({social:2,energy:-2}); S.familyScore=clamp(S.familyScore+1,0,10); card('good','家庭溝通','深吸一口氣，把最近的狀況、接下來的打算一五一十說給爸媽聽。原本緊繃的餐桌氣氛，隨著對話漸漸緩和下來，媽媽最後甚至幫你多夾了一塊肉。'); board(); }},
+      {t:'不耐煩地頂回去',s:'人際 -、家庭 -',warn:true,f:()=>{ applyEff({social:-4}); S.familyScore=clamp(S.familyScore-1,0,10); card('bad','家庭衝突','「你們很煩耶！」話一出口就後悔了，但已經來不及。爸媽的臉色瞬間沉下來，剩下的晚餐大家都沒再說話，你一個人回房間，把門關得比平常重了一點。人際 <b class="dn">-4</b>。'); board(); }}
     ]};
 }
 function coupleFightEvent(){
   return {id:'couplefight',title:'跟另一半吵架了',
-    desc:'這次段考成績退步了，另一半覺得你心情不好都在遷怒，兩人因為一件小事吵了起來。',
+    desc:'手機螢幕上，他已經傳了三則訊息，語氣一次比一次冷。最近陪伴他的時間確實變少了，讀書、社團、打工把你的行事曆塞得滿滿，他覺得自己被排在最後一位，兩人終於因為一件小事，在通話裡吵了起來。',
     choices:[
-      {t:'主動道歉、和好',s:'人際 +，但對方心情難預料',main:true,f:()=>{
-          if(chance(75)){ applyEff({social:4}); card('good','和好','放低身段先開口，兩人和好了。人際 <b class="up">+4</b>。'); }
-          else { card('info','和好 未竟','道歉了，但對方還在消化情緒，這次沒什麼變化。'); }
+      {t:'主動道歉、和好',s:'感情 +，但對方心情難預料',main:true,f:()=>{
+          if(chance(75)){ applyEff({social:4}); S.loveScore=clamp(S.loveScore+2,0,10); card('good','和好','放低身段先開口，一句句把心裡的話說開。電話那頭沉默了幾秒，接著傳來一聲輕輕的嘆氣，兩人重新和好了。人際 <b class="up">+4</b>。'); }
+          else { card('info','和好 未竟','道歉的話說出口了，但對方回得很簡短，聽得出來情緒還沒完全消化。這通電話最後是在一種尷尬的沉默中掛斷的。'); }
           board(); }},
-      {t:'等對方先低頭',s:'人際 -',warn:true,f:()=>{ applyEff({social:-4}); card('bad','冷戰','誰都不想先低頭，這幾天感覺特別漫長。人際 <b class="dn">-4</b>。'); board(); }}
+      {t:'等對方先低頭',s:'人際 -、感情持續冷卻',warn:true,f:()=>{ applyEff({social:-4}); S.loveScore=clamp(S.loveScore-2,0,10); card('bad','冷戰','兩人都不想先低頭，訊息已讀不回變成了默契。這幾天，連平常最愛用的貼圖都懶得傳了。人際 <b class="dn">-4</b>。'); board(); }}
     ]};
 }
 function breakupCrisisEvent(){
   return {id:'breakup',title:'感情，遇到瓶頸',
-    desc:'成績又退步了，這已經是這陣子第三次為了同樣的事吵架，兩人開始認真討論要不要繼續走下去。',
+    desc:'放學後，他約你在校門口的老地方見面。夕陽把兩人的影子拉得很長，他低著頭，手指不停絞著書包背帶，好一會兒才抬起頭：「最近你的時間，好像都被讀書、社團、打工分光了……我們，還要不要繼續走下去？」',
     choices:[
       {t:'提分手，先衝刺考試',s:'課業 +，人際 -多',warn:true,f:()=>{
           S.inRelationship=false; applyEff({study:5,social:-6});
-          card('bad','分手','兩人決定先放下這段感情，專心準備考試。課業 <b class="up">+5</b>，人際 <b class="dn">-6</b>。');
+          card('bad','分手','你們在校門口站了很久，最後誰也沒有再多說什麼，只是點了點頭。走回家的路上，手機裡那些聊天記錄突然變得很安靜。課業 <b class="up">+5</b>，人際 <b class="dn">-6</b>。');
           traitCard('single','單身貴族','放下了這段感情，一個人也能把日子過得很好。');
           board(); }},
       {t:'撐下去，繼續交往',s:'結果難料',main:true,f:()=>{
-          S.coupleFightCount=0;
-          if(chance(60)){ applyEff({social:4}); card('good','撐過去了','兩人重新調整步調，感情反而更穩了。人際 <b class="up">+4</b>。'); }
-          else { applyEff({study:-5,social:-2}); card('bad','貌合神離','雖然沒分手，但心思常常不在書本上。課業 <b class="dn">-5</b>，人際 <b class="dn">-2</b>。'); }
+          S.loveScore=clamp(S.loveScore+3,0,10);
+          if(chance(60)){ applyEff({social:4}); card('good','撐過去了','兩人在原地聊了很久，把心裡的委屈跟不安都攤開來說。最後約定好，以後不管多忙，都要留一點時間給彼此。人際 <b class="up">+4</b>。'); }
+          else { applyEff({study:-5,social:-2}); card('bad','貌合神離','嘴上說著沒事，但接下來幾天上課總是恍神，腦子裡反覆想著剛剛的對話。雖然沒分手，但那份不安一直懸在心裡。課業 <b class="dn">-5</b>，人際 <b class="dn">-2</b>。'); }
           board(); }}
     ]};
 }
-function confessEvent(){
-  return {id:'confess',title:'有人跟你告白',
-    desc:'放學後，被叫到樓梯間——有人鼓起勇氣跟你告白了。',
+function crushEvent(){
+  return {id:'crush',title:'你碰到一位心儀的對象',
+    desc:'你也說不清楚是從什麼時候開始的——可能是某次社團活動的巧遇，也可能是某堂課借筆記的小互動。總之，你發現自己開始特別在意某個人的一舉一動，而對方看你的眼神，似乎也帶著一點不一樣的溫度。是否要展開追求？',
     choices:[
-      {t:'答應交往',s:'人際 +多、之後精力分配會更緊繃',main:true,
-        f:()=>{ S.inRelationship=true; S.coupleFightCount=0; applyEff({social:8});
-          card('gold','戀愛開始',`答應了。放學後多了一個人陪，人際 <b class="up">+8</b>。之後要多留一點時間給對方。`);
+      {t:'展開追求',s:'感情數值開始累積，多次互動後才會正式交往',main:true,f:()=>{
+          S.crushActive=true; S.loveScore=clamp(S.loveScore+2,0,10);
+          card('good','展開追求','鼓起勇氣傳了第一則訊息，心跳快得像要跳出胸口。之後開始找各種理由多聊聊、多接觸——一起去合作社、放學同路走一段。感情的種子，就這樣悄悄種下了。'); board(); }},
+      {t:'先觀望，不主動',f:()=>{ card('info','先觀望','想了想，還是決定先不要輕舉妄動，把這份心動悄悄收在心裡，繼續過自己的生活。'); }}
+    ]};
+}
+function datingBeginsEvent(){
+  return {id:'datingbegins',title:'感情升溫',
+    desc:'這陣子跟他相處得越來越自然，一起走的路變長了，聊天的話題也越來越沒有邊界。這天放學，兩人並肩走在夕陽下的人行道上，他忽然停下腳步，深吸一口氣，紅著臉問你：「我們，要不要正式在一起？」',
+    choices:[
+      {t:'答應交往',s:'人際 +多、之後要記得排約會時間',main:true,
+        f:()=>{ S.inRelationship=true; S.crushActive=false; applyEff({social:8});
+          card('gold','戀愛開始',`你點了點頭，兩人相視而笑，路燈這時剛好亮起。以後時間分配裡會多一個「約會」選項，記得留時間陪他，不然感情會慢慢變淡。人際 <b class="up">+8</b>。`);
           board(); }},
-      {t:'婉拒，先專心過自己的高中生活',f:()=>{ applyEff({social:2}); card('info','婉拒','溫柔地拒絕了，繼續走自己的路。'); board(); }}
+      {t:'婉拒，維持朋友就好',f:()=>{ S.crushActive=false; S.loveScore=clamp(S.loveScore-3,0,10); applyEff({social:2}); card('info','婉拒','你輕輕搖了搖頭，「還是先當朋友就好」。對方愣了一下，勉強笑了笑說沒關係，但那之後的沉默，比平常都要漫長。'); board(); }}
     ]};
 }
 function serveEvent(){
@@ -582,35 +650,43 @@ function licenseEvent(n){
         f:()=>{ applyEff({study:2}); card('info','自主練習','自己買書練習，省了報名費。'); board(); }}
     ]};
 }
-const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent];
+function friendPostEvent(){
+  const n=S.friend2Name;
+  return {id:'friendpost',title:n+'發了一篇動態',
+    desc:`滑動態的時候，看到${n}發了一篇很喪的貼文，抱怨最近諸事不順，底下留言已經有幾個人在問「還好嗎」。`,
+    choices:[
+      {t:'私訊關心他',s:'人際 +',main:true,f:()=>{ applyEff({social:4}); card('good','關心朋友',`傳了訊息去關心，兩人聊了很久，${n}最後說了聲謝謝，說很慶幸有你這個朋友願意聽他說。人際 <b class="up">+4</b>。`); board(); }},
+      {t:'在底下留言嘲笑他',s:'人際 -，但精力 +（省事）',warn:true,f:()=>{ applyEff({social:-5,energy:2}); card('bad','嘲笑朋友',`忍不住留了幾句酸話。${n}看到後已讀不回，接下來幾天在班上遇到，眼神都刻意避開你，氣氛有點尷尬。人際 <b class="dn">-5</b>。`); board(); }}
+    ]};
+}
+const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent];
 
 /* 告白：依年級門檻觸發（高一人際>45，高二/高三人際>60），還沒交往的話一個年級只會問一次 */
-function checkConfessionTrigger(){
-  if(S.inRelationship) return false;
-  const grade = S.examIndex<=6?1:(S.examIndex<=12?2:3);
+function curSem(){ return Math.min(6,Math.max(1,Math.ceil(S.examIndex/2))); }
+function checkCrushTrigger(){
+  if(S.inRelationship || S.crushActive) return false;
+  const grade = curSem()<=2?1:(curSem()<=4?2:3);
   if(S.confessAskedGrade===grade) return false;
   const threshold = grade===1?45:60;
   return S.social>threshold;
 }
-/* 感情週期：交往中，段考退步且機率命中就吵架；吵架滿2次後下一次改觸發分手抉擇 */
-function checkCoupleCycle(){
+/* 感情：交往後感情數值過低會吵架，見底就強制觸發分手抉擇 */
+function checkLoveCrisis(){
   if(!S.inRelationship) return null;
-  if(S.scores.length<2) return null;
-  const last=S.scores[S.scores.length-1], prev=S.scores[S.scores.length-2];
-  if(last>=prev) return null;
-  if(!chance(50)) return null;
-  return S.coupleFightCount>=2 ? 'breakup' : 'fight';
+  if(S.loveScore<=0) return 'breakup';
+  if(S.loveScore<4 && chance(50)) return 'fight';
+  return null;
 }
 
 function pickPoolEvent(){
   if(S.track==='voc'){
-    if(S.examIndex>=7 && S.examIndex<=9 && !S.usedPoolIds.includes('intern1')){ S.usedPoolIds.push('intern1'); return internshipEvent(); }
-    if(S.examIndex===13 && !S.usedPoolIds.includes('license1')){ S.usedPoolIds.push('license1'); return licenseEvent(1); }
-    if(S.examIndex===16 && !S.usedPoolIds.includes('license2')){ S.usedPoolIds.push('license2'); return licenseEvent(2); }
+    if(curSem()===3 && !S.usedPoolIds.includes('intern1')){ S.usedPoolIds.push('intern1'); return internshipEvent(); }
+    if(curSem()===5 && !S.usedPoolIds.includes('license1')){ S.usedPoolIds.push('license1'); return licenseEvent(1); }
+    if(curSem()===6 && !S.usedPoolIds.includes('license2')){ S.usedPoolIds.push('license2'); return licenseEvent(2); }
   }
   let pool=POOL_GENERIC.map(f=>f()).filter(e=>!e.cond||e.cond());
   /* 高職術科導向：高一高二課業與小組報告佔比較重，增加分組報告出現機率 */
-  if(S.track==='voc' && S.classType==='實作導向' && S.examIndex<=12){
+  if(S.track==='voc' && S.classType==='實作導向' && curSem()<=4){
     const rep=reportEvent();
     if(!rep.cond || rep.cond()) pool.push(reportEvent(),reportEvent());
   }
@@ -629,59 +705,116 @@ function maybeSick(){
   return 0;
 }
 
-/* ===== 校慶舞蹈（第10次段考前，固定大事件）===== */
-function danceEvent(cont){
-  card('info','校慶舞蹈練習週','全班要在校慶當天表演舞蹈，練習排在放學後，怎麼投入是你的選擇。');
-  choose('校慶舞蹈，你想怎麼參與？',[
-    {t:'自願當隊長，全力衝刺',s:'人際 +多，精力 -多，可能解鎖特質，但帶人不容易',main:true,
-      f:()=>{ S.danceCaptain=true;
-        if(chance(80)){ applyEff({social:10,energy:-10}); card('gold','舞蹈隊長',`自願扛下隊長，每天留下來教動作。校慶當天全班表演大成功，人際 <b class="up">+10</b>，精力 <b class="dn">-10</b>。`); }
-        else { applyEff({social:6,energy:-14}); card('bad','舞蹈隊長 風波','當隊長不好當，跟幾個組員意見不合吵了起來，排練變得更累人。人際 <b class="up">+6</b>，精力 <b class="dn">-14</b>。'); }
-        board(); cont(); }},
-    {t:'認真參加練習',s:'人際 +、精力 -',f:()=>{ applyEff({social:5,energy:-5}); card('good','認真參與','跟著大家認真練習，表演當天順利完成。人際 <b class="up">+5</b>。'); board(); cont(); }},
-    {t:'意思意思跟著跳',s:'人際小幅 +',f:()=>{ applyEff({social:2}); card('info','意思參加','站在後排隨便跟著動作，混過去了。'); board(); cont(); }},
-    {t:'請假不參加',s:'人際 -多，精力 +、多出讀書時間',warn:true,
-      f:()=>{ applyEff({social:-8,energy:5,study:3}); S.skipCount++;
-        card('bad','缺席校慶','跟老師請假沒參加，班上表演少了一個人，人際 <b class="dn">-8</b>，但多讀了一點書，課業 <b class="up">+3</b>。'); board(); cont(); }}
-  ]);
+/* ===== 校慶舞蹈（高二下事件之一）===== */
+function danceEvent(){
+  return {id:'dance',title:'校慶舞蹈練習週',desc:'班會課上，老師宣布了一個讓全班哀嚎的消息：校慶當天，每班都要出一支全班舞蹈表演。教室瞬間分成兩派——一派興奮地開始討論選歌，一派則已經在盤算怎麼躲過練習。放學後的空教室，音樂一放，練習就這樣開始了。',
+    choices:[
+      {t:'自願當隊長，全力衝刺',s:'人際 +多，精力 -多，可能解鎖特質，但帶人不容易',main:true,
+        f:()=>{ S.danceCaptain=true;
+          if(chance(80)){ applyEff({social:10,energy:-10}); card('gold','舞蹈隊長',`你舉手接下了隊長的位置，每天放學留下來一個動作一個動作教，嗓子練到沙啞，手機裡存了十幾支教學影片。校慶當天，全班在台上整齊劃一地跳完整支舞，台下歡呼聲此起彼落，你站在隊伍最前面，眼眶有點濕。人際 <b class="up">+10</b>，精力 <b class="dn">-10</b>。`); }
+          else { applyEff({social:6,energy:-14}); card('bad','舞蹈隊長 風波','當隊長遠比想像中辛苦，有人抱怨動作太難，有人嫌練習時間太長，你夾在中間兩邊安撫，好幾次練到快沒了耐性。排練變得比上課還累人，但最後表演總算是撐了下來。人際 <b class="up">+6</b>，精力 <b class="dn">-14</b>。'); }
+          board(); }},
+      {t:'認真參加練習',s:'人際 +、精力 -',f:()=>{ applyEff({social:5,energy:-5}); card('good','認真參與','雖然不是隊長，但每次練習都準時到、認真跳，動作漸漸抓到訣竅。表演當天順利完成，台下同學的手機閃光燈此起彼落。人際 <b class="up">+5</b>。'); board(); }},
+      {t:'意思意思跟著跳',s:'人際小幅 +',f:()=>{ applyEff({social:2}); card('info','意思參加','站在隊伍最後排，動作永遠慢半拍，反正燈光也照不到你。表演結束後，大家只記得前排那幾個跳得特別賣力的人。'); board(); }},
+      {t:'請假不參加',s:'人際 -多，精力 +、多出讀書時間',warn:true,
+        f:()=>{ applyEff({social:-8,energy:5,study:3}); S.skipCount++;
+          card('bad','缺席校慶','跟導師請了假，說要準備考試。校慶那天你一個人在圖書館唸書，隔天回教室，發現班上的合照裡少了你一個人，同學看你的眼神也有點微妙。人際 <b class="dn">-8</b>，但多讀了一點書，課業 <b class="up">+3</b>。'); board(); }}
+    ]};
+}
+function clubShowcaseEvent(){
+  const isPresident=S.clubPresident;
+  return {id:'showcase',title:S.clubName+' 成果發表會',
+    desc: isPresident
+      ? `身為社長，${S.clubName}這學期的成果發表會幾乎是你一手籌劃的。海報設計、場地佈置、流程安排，每一個細節你都反覆確認過。開場前你站在後台，看著台下漸漸坐滿的觀眾席跟聞訊而來的學弟妹，手心全是汗。`
+      : `${S.clubName}這學期的成果發表會終於到了，社辦裡堆滿了道具跟看板，大家為了這天已經準備好幾個禮拜。輪到自己上場的環節越來越近，心跳也跟著加快。`,
+    choices:[
+      {t:'全力以赴，站上台中心',s:'人際 +多、精力 -多',main:true,f:()=>{
+          if(chance(80)){ applyEff({social:isPresident?12:8,energy:-8}); S.clubScore=clamp(S.clubScore+2,0,10);
+            card('gold','成果展 大成功', isPresident
+              ? `你站上台，代表${S.clubName}向全校介紹這一年的成果。台下掌聲不斷，活動結束後，好幾個學弟妹圍上來說想加入明年的社團。那一刻，你覺得這學期投入的所有時間都值得了。人際 <b class="up">+12</b>，精力 <b class="dn">-8</b>。`
+              : `你在成果展上主動扛下重要的展演環節，表現超乎自己預期，台下的歡呼聲讓你整張臉都紅了。人際 <b class="up">+8</b>，精力 <b class="dn">-8</b>。`);
+          } else { applyEff({social:isPresident?7:4,energy:-11});
+            card('bad','成果展 小插曲','表演途中出了點小差錯，你臨場應變硬是把場面圓了回來，雖然驚險，但台下觀眾似乎沒發現。整個過程比想像中更耗費心力。人際小幅上升，精力大幅流失。'); }
+          board(); }},
+      {t:'負責幕後，穩穩支援',s:'人際 +、精力 -',f:()=>{ applyEff({social:4,energy:-4}); card('good','幕後功臣','沒有站上台，但在幕後張羅道具、控音控燈，一樣是這場成果展不可或缺的一份子。表演結束後大家一起收拾場地，笑鬧聲不斷。人際 <b class="up">+4</b>。'); board(); }},
+      {t:'意思意思參與，能躲就躲',s:'人際小幅 +',f:()=>{ applyEff({social:1}); card('info','低調參與','找了個不起眼的位置站著，混過了整場活動，成果展的內容你其實也記不太清楚。'); board(); }}
+    ]};
+}
+function farewellEvent(){
+  return {id:'farewell',title:'最後的日子',
+    desc:'高三下的日子過得特別快，導師在班會上宣布，這學期末的謝師宴跟最後一次全班晚自習，都已經排定了時間。教室後面的倒數計時看板，數字一天天往下掉，大家心裡都清楚——這段日子，真的快要結束了。',
+    choices:[
+      {t:'參加謝師宴，跟師長好好道別',s:'人際 +、精力 -',main:true,f:()=>{
+          applyEff({social:6,energy:-3});
+          card('good','謝師宴','餐廳包廂裡擠滿了同學跟老師，敬酒、合照、輪流上台說感謝的話，導師哽咽著說了幾句叮嚀，全班一起紅了眼眶。人際 <b class="up">+6</b>。');
+          board(); }},
+      {t:'留下來，跟全班熬最後一次晚自習',s:'課業 +、人際 +、精力 -',f:()=>{
+          applyEff({study:3,social:4,energy:-5});
+          card('good','最後的晚自習','教室的日光燈還是一樣亮，但氣氛卻不太一樣了。大家一邊讀書一邊偷偷聊天，窗外的天色暗了又暗，這大概是這間教室，留給你們最後的記憶。課業 <b class="up">+3</b>，人際 <b class="up">+4</b>。');
+          board(); }},
+      {t:'請假回家，提前收拾心情',s:'精力 +',f:()=>{
+          applyEff({energy:5});
+          card('info','提前離開','決定不參加這些活動，一個人靜靜地整理書桌、收拾這三年累積的東西。有點可惜，但心裡也覺得平靜。精力 <b class="up">+5</b>。');
+          board(); }}
+    ]};
 }
 
 /* ===== 時間分配面板 ===== */
 function rollPool(){
-  const bonus = S.examIndex>=13 ? 0 : 2; /* 高三時間更緊繃，少了額外空堂 */
+  const bonus = curSem()>=5 ? 0 : 6; /* 高三時間更緊繃，少了額外空堂；每次分配涵蓋半學期，量比以前多 */
   const d1=ri(1,6), d2=ri(1,6);
   return {d1,d2,pool:d1+d2+bonus};
 }
 function studyMult(){
   if(S.track==='voc' && S.classType==='實作導向'){
-    return S.examIndex<=12 ? 1.3 : 1.0; /* 術科：高一高二課業比重高，高三恢復正常 */
+    return curSem()<=4 ? 1.3 : 1.0; /* 術科：高一高二課業比重高，高三恢復正常 */
   }
-  let m = S.examIndex>=10 ? 1.6 : 1.0; /* 普高 & 高職升學導向：跟高中一樣，高二下起衝刺 */
-  if(S.examIndex>=13 && S.keptBusyIntoHighSchool){ m = 1.0+(m-1.0)*0.5; } /* 升高三暑假沒退社團/打工，加乘減半 */
+  let m = curSem()>=4 ? 1.6 : 1.0; /* 普高 & 高職升學導向：跟高中一樣，高二下起衝刺 */
+  if(curSem()>=5 && S.keptBusyIntoHighSchool){ m = 1.0+(m-1.0)*0.5; } /* 升高三暑假沒退社團/打工，加乘減半 */
+  if(S.sprintActive){ m += 0.15; }
   return m;
 }
 function decayStats(){
-  S.study=S.study*0.96;
-  S.social=S.social*0.955;
+  /* 靈命越高，其他數值衰退越慢（最多緩解30%） */
+  const faithRelief = clamp(S.faith,0,100)/100*0.3;
+  S.study=S.study*(1-0.04*(1-faithRelief));
+  S.social=S.social*(1-0.045*(1-faithRelief));
   S.faith=S.faith*0.955;
+  S.energy=clamp(S.energy+4,0,100); /* 每回合小幅回復，但不夠應付花費，仍需靠「體力」休息 */
+  /* 人際子數值：緩慢漂移、過低會拖累整體人際 */
+  S.familyScore=clamp(S.familyScore-0.15,0,10);
+  if(S.hasClub) S.clubScore=clamp(S.clubScore-0.2,0,10);
+  if(S.hasJob) S.jobScore=clamp(S.jobScore-0.2,0,10);
+  S.serviceScore=clamp(S.serviceScore-0.15,0,10);
+  if(S.hasClub && S.clubScore<5) S.social=Math.max(0,S.social-0.3);
+  if(S.familyScore<5) S.social=Math.max(0,S.social-0.3);
+  if(S.inRelationship && S.loveScore<5) S.social=Math.max(0,S.social-0.3);
+  if(S.crushActive) S.loveScore=clamp(S.loveScore+1,0,10); /* 曖昧期自然升溫 */
 }
 function allocPanel(pool,dice,cont){
+  const presidentLock = S.clubPresident && (curSem()===3||curSem()===4);
+  const forcedClubMin = presidentLock ? Math.min(4,pool) : 0;
+  const managerLock = S.jobTier>=2 && (curSem()===4||curSem()===5);
+  const forcedJobMin = managerLock ? Math.min(3,pool) : 0;
+  const jobRate = S.jobTier>=2?260:S.jobTier===1?200:150;
+  const jobLabel = S.jobTier>=2?`人際 +、$${jobRate}（小主管，至少投入${forcedJobMin}點）`:S.jobTier===1?`$${jobRate}（正職）`:`$${jobRate}`;
   const cats=[
     {k:'study',n:'讀書',u:studyMult()>1?`課業 +${(1.3*studyMult()).toFixed(1)}（加乘中）`:'課業 +1.3'},
-    {k:'club',n:'社團',u:'人際 +1.0',lock:!S.hasClub},
+    {k:'club',n:'社團',u:presidentLock?`人際 +1.0（社長，至少投入${forcedClubMin}點）`:'人際 +1.0',lock:!S.hasClub},
     {k:'friend',n:'朋友',u:'人際 +1.15',lock:false},
-    {k:'job',n:'打工',u:'$150',lock:!S.hasJob},
-    {k:'church',n:'靈修',u:'靈命 +1.3'},
+    {k:'date',n:'約會',u:'感情 +',lock:!S.inRelationship},
+    {k:'job',n:'打工',u:jobLabel,lock:!S.hasJob},
+    {k:'church',n:'靈修',u:'靈命 +1.3',lock:false},
     {k:'rest',n:'體力',u:'精力 +4'}
   ];
-  const val={study:0,club:0,friend:0,job:0,church:0,rest:0};
-  function used(){ return val.study+val.club+val.friend+val.job+val.church+val.rest; }
+  const val={study:0,club:forcedClubMin,friend:0,date:0,job:forcedJobMin,church:0,rest:0};
+  function used(){ return val.study+val.club+val.friend+val.date+val.job+val.church+val.rest; }
   function poolLineText(remain){
     return remain>0?`還剩 ${remain} 點沒分配，全部用完才能繼續（不知道怎麼分？剩的可以都丟給「體力」）`:`共 ${pool} 點，已全部分配完畢`;
   }
   function render(){
     const remain=pool-used();
-    let html=`<div class="title">時間分配（本次段考前）</div>`;
+    let html=`<div class="title">${examLabel()}時間分配</div>`;
     if(dice){
       const diff=pool-dice.d1-dice.d2;
       const extra= diff>0 ? `<span class="diceEq">＋${diff}（空堂）</span>` : diff<0 ? `<span class="diceEq">（精力不足，縮減 ${-diff}）</span>` : '';
@@ -689,10 +822,11 @@ function allocPanel(pool,dice,cont){
     }
     html+=`<div class="poolline">${poolLineText(remain)}</div><div class="wk-grid">`;
     cats.forEach(c=>{
+      const floor = c.k==='club' ? forcedClubMin : c.k==='job' ? forcedJobMin : 0;
       html+=`<div class="wk-item${c.lock?' locked':''}">
         <div class="nm">${c.n}<small>${c.lock?'尚未開放':c.u}</small></div>
         <div class="ctr">
-          <button class="stepbtn" data-a="-" data-k="${c.k}" ${c.lock||val[c.k]<=0?'disabled':''}>−</button>
+          <button class="stepbtn" data-a="-" data-k="${c.k}" ${c.lock||val[c.k]<=floor?'disabled':''}>−</button>
           <div class="val">${val[c.k]}</div>
           <button class="stepbtn" data-a="+" data-k="${c.k}" ${c.lock||remain<=0?'disabled':''}>＋</button>
         </div>
@@ -712,7 +846,7 @@ function allocPanel(pool,dice,cont){
 }
 
 /* ===== 寒暑假 ===== */
-const BREAK_AFTER={3:'winter',6:'summer',9:'winter',12:'summer',15:'winter'};
+const BREAK_AFTER={2:'winter',4:'summer',6:'winter',8:'summer',10:'winter'};
 const BREAK_CATS={
   camp:{n:'大學科系營隊',sub:'課業+2/週・人際+1/週・金錢-250/週',eff:{study:2,social:1,money:-250}},
   clubtrip:{n:'社團社遊/集訓',sub:'人際+2/週・精力-2/週',eff:{social:2,energy:-2},lockKey:'hasClub'},
@@ -736,7 +870,7 @@ function weekAllocPanel(type,weeks,cont){
     const c=BREAK_CATS[k];
     if(!c.eff.money || c.eff.money>=0) return false;
     if(k==='hangout') return false; /* 跟朋友出去玩：沒錢也能去，只是會變摳門 */
-    if(S.social>=65) return false; /* 家人關係好，爸媽罩你 */
+    if(S.familyScore>=6) return false; /* 家人關係好，爸媽罩你 */
     let committed=0;
     keys.forEach(kk=>{ if(kk==='hangout')return; const cc=BREAK_CATS[kk]; if(cc.eff.money<0) committed+=-cc.eff.money*val[kk]; });
     return committed+(-c.eff.money) > S.money;
@@ -782,6 +916,7 @@ function weekAllocPanel(type,weeks,cont){
           Object.keys(c.eff).forEach(stat=>{ total[stat]=(total[stat]||0)+c.eff[stat]*n; });
           if(k==='jobweek')S.cumJobPoints+=n*2;
         });
+        if(!val.discipleship) S.discCampEveryBreak=false; /* 生命翻轉：每個寒暑假都要參加門徒營 */
         applyEff(total);
         board();
         checkTraits();
@@ -802,43 +937,55 @@ function breakEvent(type,cont){
   weekAllocPanel(type,weeks,cont);
 }
 function summerBurnoutEvent(cont){
-  card('bad','爸媽發火了','升高三前的這個暑假，你花太多時間在社團和打工上，成績單一出來，爸媽整個氣炸，覺得你太不專心。');
+  card('bad','爸媽發火了','客廳的燈開得特別亮，桌上攤著這學期的成績單，爸媽的臉色比燈光還冷。「你花在社團跟打工的時間，比讀書還多吧？」媽媽的聲音壓得很低，卻比大吼還讓人喘不過氣。你知道，這場對話躲不掉了。');
   choose('要不要收斂一點，退出社團或打工？',[
     {t:'決定退出，專心準備高三',main:true,f:()=>{
-      S.hasClub=false; S.hasJob=false; S.keptBusyIntoHighSchool=false;
-      applyEff({social:-3});
-      card('good','決定退出','忍痛跟社團夥伴、店長告別，把時間留給高三。人際 <b class="dn">-3</b>，但接下來讀書效率會是最佳狀態。');
+      S.hasClub=false; S.hasJob=false; S.keptBusyIntoHighSchool=false; S.clubPresident=false;
+      applyEff({social:-3}); S.familyScore=clamp(S.familyScore+1,0,10);
+      card('good','決定退出','那個週末，你分別跟社團夥伴、打工的店長開口，說明了自己的決定。大家雖然捨不得，但都表示理解。收拾置物櫃的最後一天，你在心裡跟這段日子道了別，把接下來的時間，留給高三。人際 <b class="dn">-3</b>，但接下來讀書效率會是最佳狀態。');
       board(); cont(); }},
     {t:'不想退，繼續維持生活步調',warn:true,f:()=>{
-      S.keptBusyIntoHighSchool=true;
-      card('bad','沒有退出','雖然被念了一頓，還是決定繼續兼顧社團跟打工。高三的讀書效率會打折扣。');
+      S.keptBusyIntoHighSchool=true; S.familyScore=clamp(S.familyScore-1,0,10);
+      card('bad','沒有退出','那場對話最後不歡而散，你把房門關上，心裡卻還是決定繼續走自己的步調，兼顧社團跟打工。只是接下來每次打開課本，那句「你花的時間比讀書還多」總會不自覺浮上心頭，多少影響了讀書的專注力。');
       cont(); }}
   ]);
 }
 
 /* ===== 段考結算 ===== */
-function resolveExam(val){
-  applyEff({study:val.study*1.3*studyMult(), social:val.club*1.0+val.friend*1.15, faith:val.church*1.3, money:val.job*150, energy:val.rest*4});
+function resolveExam(val,which){
+  const jobRate = S.jobTier>=2?260:S.jobTier===1?200:150;
+  applyEff({study:val.study*1.3*studyMult(), social:val.club*1.0+val.friend*1.15, faith:val.church*1.3, money:val.job*jobRate, energy:val.rest*4});
   S.cumJobPoints+=val.job;
+  S.clubScore=clamp(S.clubScore+val.club*0.6,0,10);
+  S.jobScore=clamp(S.jobScore+val.job*0.6,0,10);
+  S.serviceScore=clamp(S.serviceScore+val.church*0.6,0,10);
+  if(S.inRelationship){
+    if(val.date>0){ S.loveScore=clamp(S.loveScore+val.date*1.2,0,10); applyEff({social:val.date*0.5}); }
+    else { S.loveScore=clamp(S.loveScore-2,0,10); }
+  }
   /* 精力消耗 */
-  const spentEnergy=val.study*3+val.club*2.5+val.friend*1.5+val.job*3+val.church*1;
+  const spentEnergy=val.study*3+val.club*2.5+val.friend*1.5+(val.date||0)*1.5+val.job*3+val.church*1;
   applyEff({energy:-spentEnergy});
+  S.sprintActive=false; /* 衝刺加成只作用這一次分配，用完即清 */
   if(S.energy<=8)S.lowEnergyCount++;
   if(S.money<=200)S.lowMoneyCount++;
-  const fatigue=S.energy<25?(25-S.energy)*0.5:0;
-  const score=clamp(Math.round(S.study*0.85+18+N0(6)-fatigue),0,100);
+  if(S.study<45)S.lowStudyCheckpoints++;
+  const fatigue=()=>S.energy<25?(25-S.energy)*0.5:0;
+  const rollOnce=()=>clamp(Math.round(S.study*0.85+18+N0(6)-fatigue()),0,100);
+  const score = which===2 ? Math.round((rollOnce()+rollOnce())/2) : rollOnce(); /* 期末：公式跑兩次取平均，緩和單次隨機的震盪 */
   S.scores.push(score);
   board();
   const tone= score>=80?'gold':score>=60?'good':score>=40?'info':'bad';
   const comment= score>=85?'全班前段，穩穩的。':score>=70?'表現不錯，繼續保持。':score>=55?'普普通通，還有進步空間。':score>=40?'有點吃力了，該找回讀書節奏。':'這次真的很低空飛過，得警覺了。';
+  const rank=clamp(Math.round(41-(score/100)*40+ri(-2,2)),1,40);
   divider(examLabel());
-  card(tone,'段考成績：'+score+' 分',`${comment}<br><span style="color:var(--dim);font-size:12px">課業 ${Math.round(S.study)}／人際 ${Math.round(S.social)}／靈命 ${Math.round(S.faith)}／精力 ${Math.round(S.energy)}</span>`);
+  card(tone,(which===2?'期末成績':'期初成績')+'：'+score+' 分（班排 '+rank+' / 40）',`${comment}<br><span style="color:var(--dim);font-size:12px">課業 ${Math.round(S.study)}／人際 ${Math.round(S.social)}／靈命 ${Math.round(S.faith)}／精力 ${Math.round(S.energy)}</span>`);
   checkTraits();
   board();
 }
 
 function checkTraits(){
-  if(S.examIndex>=9 && S.study>=88 && S.social<=35) traitCard('bookworm','讀書狂','課業一路衝到頂尖，但社交生活幾乎是空白。');
+  if(S.examIndex>=6 && S.study>=88 && S.social<=35) traitCard('bookworm','讀書狂','課業一路衝到頂尖，但社交生活幾乎是空白。');
   if(S.social>=90) traitCard('popular','中央空調','走在校園裡幾乎人人都認識你，對誰都一樣溫暖。');
   if(S.faith>=90) traitCard('faithful','Holy基督徒','教會裡最穩定的那個人，總是在。');
   if(S.lowMoneyCount>=3) traitCard('brokewallet','錢包扁扁','荷包長期見底，練就一身省錢功夫。');
@@ -853,100 +1000,252 @@ function checkTraits(){
   if(S.cheapCount>=3) traitCard('cheap','小氣巴拉','出去玩總是讓朋友先出錢，荷包是保住了，但朋友心裡都有數。');
   if(S.money>=5000) traitCard('richking','大富翁','荷包滿滿，畢業時存款比很多社會新鮮人還多。');
   if(S.sickCount>=5) traitCard('daiyu','林黛玉','整天病懨懨，風吹了就倒，卻也把生病活成了一種日常美學。');
+  if(S.clubPresident) traitCard('president','社團社長','扛下了社長的責任，高二有一大段時間都獻給了這個社團。');
+  if(S.jobTier>=2) traitCard('jobmanager','打工小主管','從工讀生一路做到值班主管，職場歷練比同齡人多了不少。');
 }
 
 /* ===== 主流程 ===== */
-function chooseForcedEvent(ev){
-  /* 強制事件的選項，選完後要接續進入「時間分配」面板 */
-  const wrapped=ev.choices.map(o=>({...o,f:()=>{ o.f(); afterEvent(); }}));
+function chooseForcedEventThen(ev,cont){
+  /* 一般突發事件的選項，選完後接續下一個事件槽或流程 */
+  const wrapped=ev.choices.map(o=>({...o,f:()=>{ o.f(); cont(); }}));
   choose(ev.title+'，你怎麼選？',wrapped);
 }
-function nextExam(){
+function interviewResultEvent(){
+  const successChance=clamp(45+(S.social-50)*0.7,15,90);
+  const success=chance(successChance);
+  if(success) applyEff({social:3}); else applyEff({social:-2,energy:-2});
+  board();
+  const desc = success
+    ? '面試官對你的表現印象很好，錄取的把握又更大了一些。人際 <b class="up">+3</b>。'
+    : '面試表現不算特別亮眼，但備取也還有機會遞補。心裡有點忐忑。人際 <b class="dn">-2</b>，精力 <b class="dn">-2</b>。';
+  return {id:'interview',title:'面試結果公布',desc,choices:[{t:'繼續準備',main:true,f:()=>{}}]};
+}
+function pickEventForSlot(semIdx){
+  if(S.track==='gen' && semIdx===6 && S.examPath==='interview' && !S.interviewDone){
+    S.interviewDone=true;
+    return interviewResultEvent();
+  }
+  if(semIdx===5 && S.inRelationship && !S.enteringHigh3BreakupDone){
+    S.enteringHigh3BreakupDone=true;
+    return breakupCrisisEvent();
+  }
+  if(S.crushActive && S.loveScore>=7){
+    return datingBeginsEvent();
+  }
+  if(checkCrushTrigger()){
+    S.confessAskedGrade = curSem()<=2?1:(curSem()<=4?2:3);
+    return crushEvent();
+  }
+  const crisis=checkLoveCrisis();
+  if(crisis){
+    return crisis==='breakup'?breakupCrisisEvent():coupleFightEvent();
+  }
+  if(semIdx===4 && !S.danceDone){ S.danceDone=true; return danceEvent(); }
+  if(semIdx===4 && S.hasClub && !S.showcaseDone){ S.showcaseDone=true; return clubShowcaseEvent(); }
+  if(semIdx===6 && !S.farewellDone){ S.farewellDone=true; return farewellEvent(); }
+  const sev=maybeSick();
+  if(sev){
+    S.sickCount++;
+    const decayMap={1:0.99,2:0.965,3:0.93};
+    S.study*=decayMap[sev]; S.social*=decayMap[sev];
+    board();
+    return sickEvent(sev);
+  }
+  return pickPoolEvent();
+}
+function runEventSlots(semIdx,remaining,cont){
+  if(remaining<=0){ cont(); return; }
+  const ev=pickEventForSlot(semIdx);
+  card('info',ev.title,ev.desc);
+  chooseForcedEventThen(ev, ()=>runEventSlots(semIdx,remaining-1,cont));
+}
+function checkpointFlow(semIdx,which){
   S.examIndex++;
-  if(S.examIndex>18){ return endGame(); }
   decayStats();
   board();
-  const semStart = (S.examIndex-1)%3===0;
-  const afterIntro = ()=>{
-    if(S.examIndex===10){ // 校慶舞蹈固定在第10次段考前，選完直接進入時間分配
-      danceEvent(afterEvent);
-      return;
-    }
-    afterForcedPick();
-  };
-  const afterForcedPick=()=>{
-    if(S.track==='gen' && S.examIndex===17 && S.examPath==='interview' && !S.interviewDone){
-      S.interviewDone=true;
-      const successChance=clamp(45+(S.social-50)*0.7,15,90);
-      if(chance(successChance)){ applyEff({social:3}); card('exam','面試結果公布','面試官對你的表現印象很好，錄取的把握又更大了一些。人際 <b class="up">+3</b>。'); }
-      else { applyEff({social:-2,energy:-2}); card('exam','面試結果公布','面試表現不算特別亮眼，但備取也還有機會遞補。心裡有點忐忑。人際 <b class="dn">-2</b>，精力 <b class="dn">-2</b>。'); }
-      board();
-    }
-    if(S.examIndex===13 && S.inRelationship && !S.enteringHigh3BreakupDone){
-      S.enteringHigh3BreakupDone=true;
-      const ev=breakupCrisisEvent();
-      card('info',ev.title,ev.desc);
-      chooseForcedEvent(ev);
-      return;
-    }
-    if(checkConfessionTrigger()){
-      S.confessAskedGrade = S.examIndex<=6?1:(S.examIndex<=12?2:3);
-      const ev=confessEvent();
-      card('info',ev.title,ev.desc);
-      chooseForcedEvent(ev);
-      return;
-    }
-    const cycle=checkCoupleCycle();
-    if(cycle){
-      const ev = cycle==='breakup' ? breakupCrisisEvent() : coupleFightEvent();
-      if(cycle==='fight') S.coupleFightCount++;
-      card('info',ev.title,ev.desc);
-      chooseForcedEvent(ev);
-      return;
-    }
-    const sev=maybeSick();
-    if(sev){
-      S.sickCount++;
-      const decayMap={1:0.99,2:0.965,3:0.93};
-      S.study*=decayMap[sev]; S.social*=decayMap[sev];
-      board();
-    }
-    const ev= sev ? sickEvent(sev) : pickPoolEvent();
-    card('info',ev.title,ev.desc);
-    chooseForcedEvent(ev);
-  };
-  if(semStart){ semesterIntro(afterIntro); }
-  else afterIntro();
-}
-function afterEvent(){
-  const roll=rollPool();
-  let finalPool=roll.pool;
-  if(S.energy<=8){ finalPool=Math.max(3,finalPool-4); card('bad','過度疲勞','精力幾乎見底，這次能分配的時間點數變少了。'); }
-  allocPanel(finalPool,roll,(val)=>{ resolveExam(val);
-    if(S.examIndex%3===0){ semesterSummary(); }
-    setTimeout(()=>{
-      if(S.examIndex>=18){ endGame(); return; }
-      const brk=BREAK_AFTER[S.examIndex];
-      if(brk){
-        breakEvent(brk,()=>{
-          if(S.examIndex===12 && S.hasClub && S.hasJob && !S.summerBurnoutDone){
-            S.summerBurnoutDone=true;
-            summerBurnoutEvent(()=>nextExam());
-          } else {
-            nextExam();
-          }
-        });
+  const proceedToAlloc=()=>{
+    const roll=rollPool();
+    let finalPool=roll.pool;
+    if(S.energy<=8){ finalPool=Math.max(3,finalPool-4); card('bad','過度疲勞','精力幾乎見底，這次能分配的時間點數變少了。'); }
+    allocPanel(finalPool,roll,(val)=>{
+      resolveExam(val,which);
+      if(which===1){
+        setTimeout(()=>runEventSlots(semIdx,3,()=>checkpointFlow(semIdx,2)),50);
+      } else {
+        semesterSummary(semIdx);
+        setTimeout(()=>{
+          semesterEndHooks(semIdx,()=>{
+            if(S.expelled) return; /* endGame 已經在 academicCrisisCheck 內觸發 */
+            if(S.examIndex>=12){ endGame(); return; }
+            const brk=BREAK_AFTER[S.examIndex];
+            const afterBreak=()=>{
+              if(S.examIndex===10 && !S.starTaken){
+                offerEarlyEnding(()=>startSemester(semIdx+1));
+              } else {
+                startSemester(semIdx+1);
+              }
+            };
+            if(brk){
+              breakEvent(brk,()=>{
+                if(S.examIndex===8 && S.hasClub && S.hasJob && !S.summerBurnoutDone){
+                  S.summerBurnoutDone=true;
+                  summerBurnoutEvent(afterBreak);
+                } else {
+                  afterBreak();
+                }
+              });
+            } else {
+              afterBreak();
+            }
+          });
+        },50);
       }
-      else nextExam();
-    },50);
-  });
+    });
+  };
+  if(which===2){
+    choose('要不要在期末前全力衝刺？',[
+      {t:'全力衝刺，拚一波',s:'讀書效率 +、精力 -',main:true,f:()=>{ S.sprintActive=true; applyEff({energy:-3}); card('good','全力衝刺','這幾天卯足全力，讀書效率會提升一些。精力 <b class="dn">-3</b>。'); board(); proceedToAlloc(); }},
+      {t:'維持步調，量力而為',f:()=>{ card('info','維持步調','決定按照原本的節奏走，不硬拚。'); proceedToAlloc(); }}
+    ]);
+  } else {
+    proceedToAlloc();
+  }
 }
-function semesterSummary(){
-  const semIdx=Math.ceil(S.examIndex/3);
-  const s3=S.scores.slice(-3);
-  const avg=Math.round(s3.reduce((a,b)=>a+b,0)/s3.length);
+function semesterEndHooks(semIdx,cont){
+  const steps=[];
+  steps.push((next)=>academicCrisisCheck(next));
+  if(semIdx===1){ steps.push((next)=>officerOfferStep(next)); steps.push((next)=>jobPromoteStep(next)); }
+  if(semIdx===2) steps.push((next)=>presidentOrSwitchStep(next));
+  if(semIdx===3){ steps.push((next)=>jobManagerStep(next)); steps.push((next)=>serviceRole1Step(next)); }
+  if(semIdx===4) steps.push((next)=>serviceRole2Step(next));
+  runSteps(steps,cont);
+}
+function jobPromoteStep(next){
+  if(S.hasJob && S.jobTier===0 && !S.jobPromoteOffered && S.jobScore>=4){
+    S.jobPromoteOffered=true;
+    card('info','轉正職邀約',`店長把你叫到櫃檯後面，說這陣子看你做事俐落、又肯扛班表，問你要不要轉正職工讀生，時薪會比一般工讀生高一截。`);
+    choose('要轉正職嗎？',[
+      {t:'答應轉正職',s:'打工時薪提升',main:true,f:()=>{
+        S.jobTier=1; card('good','轉正職成功','點頭答應了，店長笑著在排班表上把你的名字圈了起來。從下個月開始，時薪多了一截，你也開始被交付更多責任。');
+        board(); next(); }},
+      {t:'先婉拒，維持一般工讀',f:()=>{ card('info','婉拒轉正','覺得現在的步調就好，先婉拒了店長的提議。'); next(); }}
+    ]);
+  } else { next(); }
+}
+function jobManagerStep(next){
+  if(S.hasJob && S.jobTier===1 && !S.jobManagerOffered && S.jobScore>=6){
+    S.jobManagerOffered=true;
+    card('info','小主管邀約','店長最近升調到別的分店，臨走前特別找你談了一次，問你有沒有興趣接下小主管的位置，負責排班、教新人，時薪會再往上調一級，但排班會綁得比較死。');
+    choose('要接下小主管嗎？',[
+      {t:'接下小主管',s:'時薪大幅提升，但會綁定最低打工時數',main:true,f:()=>{
+        S.jobTier=2; applyEff({social:5}); S.jobScore=clamp(S.jobScore+2,0,10);
+        card('gold','當上小主管','那天你換上新的名牌，上面印著「值班主管」四個字。第一次自己排班表、教新人結帳，手忙腳亂了好一陣子，但看著店裡順利運轉，心裡有種說不出的成就感。人際 <b class="up">+5</b>。');
+        board(); next(); }},
+      {t:'婉拒，維持正職就好',f:()=>{ card('info','婉拒小主管','想了想，還是覺得現在的步調比較適合自己，婉拒了店長的邀約。'); next(); }}
+    ]);
+  } else { next(); }
+}
+function serviceRole1Step(next){
+  if(!S.serviceRole1Offered && S.serviceScore>=4){
+    S.serviceRole1Offered=true;
+    card('info','服事邀約','聚會後，牧者或輔導特地留下來找你，說看見你這陣子在敬拜或聚會中的投入，問你要不要開始固定服事——像是司琴、司事，或負責招待。');
+    choose('要接下服事崗位嗎？',[
+      {t:'答應服事',s:'靈命 +、服事投入 +',main:true,f:()=>{
+        S.serviceTier=1; applyEff({faith:5}); S.serviceScore=clamp(S.serviceScore+1,0,10);
+        card('good','開始服事','答應了。第一次上台服事那天，手心冒著汗，結束後卻有一種踏實的滿足感，好像自己也成了群體裡不可或缺的一部分。靈命 <b class="up">+5</b>。');
+        board(); next(); }},
+      {t:'先婉拒，維持一般聚會就好',f:()=>{ card('info','婉拒服事','覺得現在專心參加聚會就好，先婉拒了。'); next(); }}
+    ]);
+  } else { next(); }
+}
+function serviceRole2Step(next){
+  if(S.serviceTier===1 && !S.serviceRole2Offered && S.serviceScore>=6){
+    S.serviceRole2Offered=true;
+    card('info','小組長邀約','牧者私下找你談話，說這陣子看見你在服事上的穩定跟成長，問你要不要試著帶一個小組，成為別人生命中的陪伴者。');
+    choose('要接下小組長／主領嗎？',[
+      {t:'接下小組長／主領',s:'靈命大幅 +、人際 +，但要撥更多時間預備',main:true,f:()=>{
+        S.serviceTier=2; applyEff({faith:8,social:3}); S.serviceScore=clamp(S.serviceScore+2,0,10);
+        card('gold','成為小組長','第一次帶小組討論的那個晚上，手裡的講義寫得密密麻麻，緊張到前一晚幾乎沒睡好。看著組員們漸漸敞開心分享，你忽然明白，這份責任雖然重，卻也讓你成長了不少。靈命 <b class="up">+8</b>，人際 <b class="up">+3</b>。');
+        traitCard('groupleader','團契領袖','從司琴到主領，一步步扛起服事的責任，看見自己在群體裡的成長。');
+        board(); next(); }},
+      {t:'婉拒，維持現有服事就好',f:()=>{ card('info','婉拒小組長','想了想，還是覺得現在的服事崗位就很適合自己，婉拒了。'); next(); }}
+    ]);
+  } else { next(); }
+}
+function academicCrisisCheck(next){
+  if(S.study<40){ S.lowStudyStreak++; } else { S.lowStudyStreak=0; }
+  if(S.lowStudyStreak>=3 && !S.expelled && !S.heldBack){
+    card('bad','死當通知','聯絡簿裡夾著一張淡黃色的單子，「成績警告通知」幾個大字特別刺眼。導師把你叫到辦公室，桌上攤開你這一年來的成績走勢圖，紅字一路往下，導師的語氣很平靜，卻讓人更喘不過氣：「你自己心裡有數，這樣下去是不行的。我們得談談接下來怎麼辦。」');
+    choose('接下來怎麼辦？',[
+      {t:'申請留級，重新來過',s:'課業重新調整，但要多花心力',main:true,f:()=>{
+        S.heldBack=true; S.study=55; S.lowStudyStreak=0;
+        card('good','決定留級','那天晚上，你跟爸媽坐在客廳談了很久。眼淚掉了幾次，但最後大家都同意——與其硬撐著往前走，不如把基礎重新打穩。辦完留級手續那天，你在心裡告訴自己，這一次，一定要走得更踏實。課業重新調整為 55。');
+        board(); next(); }},
+      {t:'選擇休學/退學',s:'遊戲提前結束',warn:true,f:()=>{
+        S.expelled=true;
+        card('bad','決定退學','你在辦公室裡想了很久，窗外的蟬聲吵得讓人心煩。最後，你緩緩開口：「我想休學。」導師沒有多說什麼，只是遞了一份表格過來。走出校門的那一刻，陽光有點刺眼，這條路，就在這裡先告一段落了。');
+        board();
+        setTimeout(()=>endGame(),300); }}
+    ]);
+  } else { next(); }
+}
+function officerOfferStep(next){
+  if(S.hasClub && !S.clubOfficer && !S.officerOffered && S.clubScore>=4){
+    S.officerOffered=true;
+    card('info','社團幹部邀約','社團學長姐注意到你這學期投入的心力，私下問你要不要接個小幹部，幫忙分擔一些行政工作。');
+    choose('要接下幹部嗎？',[
+      {t:'答應接幹部',s:'人際 +、社團投入 +',main:true,f:()=>{
+        S.clubOfficer=true; applyEff({social:3}); S.clubScore=clamp(S.clubScore+1,0,10);
+        card('good','接下幹部','答應了，開始跟著學長姐學怎麼辦活動、帶新生。人際 <b class="up">+3</b>。');
+        board(); next(); }},
+      {t:'先婉拒，維持社員身份就好',f:()=>{ card('info','婉拒幹部','覺得現在的步調就很好，先婉拒了。'); next(); }}
+    ]);
+  } else { next(); }
+}
+function presidentOrSwitchStep(next){
+  if(S.hasClub && S.clubOfficer && !S.clubPresident && !S.presidentOffered && S.clubScore>=6){
+    S.presidentOffered=true;
+    card('info','社長邀約','這天高二的社長私下來找你，問你有沒有意願接社團幹部，聊天裡稱讚你對社團又投入，和大家的關係又都很好，暗示性的問你是否會想要接社長。');
+    choose('要接下社長嗎？',[
+      {t:'接下社長',s:'高二會綁定大量社團時間，人際大幅 +，但無法再換社團',main:true,f:()=>{
+        S.clubPresident=true; applyEff({social:8}); S.clubScore=clamp(S.clubScore+2,0,10);
+        card('gold','當選社長','到了社團宣幹的那天，學長姐用心準備了活動來揭曉幹部名單，在眾人羨慕的眼光下，你打開了那張寫著「社長」的紙卡，社團的朋友們一擁而上用刮鬍泡砸在你臉上來慶祝這個時刻，在快樂與興奮之餘，你也開始對高二的社團生活有了更大的期待與責任感。');
+        board(); next(); }},
+      {t:'婉拒，先維持現狀',f:()=>{ card('info','婉拒社長','想了想，還是先婉拒了，維持現在的步調就好。'); clubSwitchStep(next); }}
+    ]);
+  } else { clubSwitchStep(next); }
+}
+function clubSwitchStep(next){
+  if(!S.hasClub || S.clubPresident || S.clubSwitchOffered){ next(); return; }
+  S.clubSwitchOffered=true;
+  const genList=['熱音社','籃球隊','美術社','熱舞社','管樂社'];
+  const vocList=['技藝研究社','熱舞社','餐飲社','機車研究社'];
+  const list = S.track==='voc'?vocList:genList;
+  const alts = list.filter(n=>n!==S.clubName);
+  const alt1=pick(alts), alt2=pick(alts.filter(n=>n!==alt1))||alts[0];
+  card('info','社團轉換期','高一下學期結束，社團博覽會又要開始了，要不要換一個社團試試？');
+  choose('要不要換社團？',[
+    {t:'留在原本的 '+S.clubName,main:true,f:()=>{ card('info','維持原社團','決定繼續留在 '+S.clubName+'。'); next(); }},
+    {t:'換到 '+alt1,f:()=>{ S.clubName=alt1; S.clubScore=clamp(S.clubScore-1,0,10); card('info','換社團','轉到了 '+alt1+'，重新認識一群新朋友。'); next(); }},
+    {t:'換到 '+alt2,f:()=>{ S.clubName=alt2; S.clubScore=clamp(S.clubScore-1,0,10); card('info','換社團','轉到了 '+alt2+'，重新認識一群新朋友。'); next(); }}
+  ]);
+}
+function offerEarlyEnding(cont){
+  card('info','人生的岔路','高三上結束了，還有最後一個學期。要不要就在這裡，先為這三年做個小結？');
+  choose('要繼續拚到畢業，還是在這裡停下來看看現在的自己？',[
+    {t:'繼續走完最後一個學期',main:true,f:()=>{ cont(); }},
+    {t:'就在這裡，先看看現在的結局',warn:true,f:()=>{ S.earlyEnd=true; endGame(); }}
+  ]);
+}
+function startSemester(semIdx){
+  if(semIdx>6) return;
+  semesterIntro(semIdx, ()=>checkpointFlow(semIdx,1));
+}
+function semesterSummary(semIdx){
+  const s2=S.scores.slice(-2);
+  const avg=Math.round(s2.reduce((a,b)=>a+b,0)/s2.length);
   S.semAverages.push({sem:SEMN[semIdx-1],avg});
-  card('info',SEMN[semIdx-1]+' 學期總結',`這學期三次段考平均 <b class="hl">${avg}</b> 分。課業 ${Math.round(S.study)}／人際 ${Math.round(S.social)}／靈命 ${Math.round(S.faith)}／金錢 $${Math.round(S.money)}。`);
+  card('info',SEMN[semIdx-1]+' 學期總結',`這學期平均 <b class="hl">${avg}</b> 分。課業 ${Math.round(S.study)}／人際 ${Math.round(S.social)}／靈命 ${Math.round(S.faith)}／金錢 $${Math.round(S.money)}。`);
 }
 
 /* ===== 結局 ===== */
@@ -984,16 +1283,34 @@ function computePrelimGenScore(){
   return scaleAndTier(raw,'gen60').scaled;
 }
 function endGame(){
+  if(S.expelled){
+    divider('休學');
+    card('bad','休學離校',`${S.name} 辦理了休學手續，高中生活在這裡先畫下句點。有些路後來會用別的方式走完，這一次，先在這裡停下。`);
+    renderRestartCard();
+    return;
+  }
   const avgStudy=S.scores.reduce((a,b)=>a+b,0)/S.scores.length;
   const rawFinal=clamp(Math.round(avgStudy*0.3+S.study*0.5+N0(8)),0,100);
   if(rawFinal-avgStudy>=15) traitCard('darkhorse','考運黑馬','平常表現普普，會考／統測當天卻超常發揮。');
   if(S.skipCount===0 && S.everSkippedChurch===false && S.sickLeaveCount===0) traitCard('perfectattend','全勤生','三年幾乎沒有缺席過重要的事，連生病都是硬撐過去的。');
   if(S.social<=25) traitCard('loner','邊緣人','三年下來，朋友圈始終沒有太熱鬧，但也習慣了自己的步調。');
+  if(S.discCampEveryBreak) traitCard('lifechange','生命翻轉','每一個寒暑假都選擇參加門徒營，信仰的根基在這幾年扎得特別深。');
+  if(S.lowStudyCheckpoints>=6) traitCard('tightrope','如履薄冰','我的高中生涯如履薄冰，你說我能順利畢業嗎？');
   checkTraits();
-  divider('畢業');
+  divider(S.earlyEnd?'提早結局':'畢業');
+  if(S.earlyEnd){
+    card('info','提早收尾','決定不走完最後一個學期，就用高三上結束這一刻的自己，做為這段故事的結局。');
+  } else {
+    const relLine = S.inRelationship ? `身邊的他也擠在人群裡，找到你的那一刻，笑著朝你揮了揮手。` : '';
+    card('gold','畢業典禮',`禮堂裡擠滿了穿著制服的畢業生，司儀正一班一班唱名，掌聲跟歡呼聲此起彼落。輪到你上台的那一刻，台下傳來${S.friend1Name}跟${S.friend2Name}特別大聲的歡呼，你們笑成一團，忙著互相拍照，捨不得這身制服太快脫下。${relLine}陽光從禮堂的窗戶灑進來，三年來的酸甜苦辣，忽然都湧上心頭。`);
+  }
 
   let label,scaled,full,tier;
-  if(S.track==='gen'){
+  if(S.starTaken){
+    label='繁星推薦結果';
+    scaled=48; full=60;
+    tier={t:'以繁星資格錄取優質國立大學／頂尖私立大學',d:'穩紮穩打的高一高二成績，讓你在繁星推薦階段就順利錄取心目中理想的學校，省去了學測的煎熬。'};
+  } else if(S.track==='gen'){
     if(S.examPath==='fenke'){
       const raw2=clamp(Math.round(avgStudy*0.3+S.study*0.5+N0(10)),0,100);
       ({scaled,full,tier}=scaleAndTier(raw2,'fenke240'));
@@ -1010,6 +1327,28 @@ function endGame(){
   /* 1. 各學期平均成績 */
   const semHtml=S.semAverages.map(s=>`${s.sem}：<b class="hl">${s.avg}</b> 分`).join('<br>');
   card('info','三年六學期成績總覽',semHtml);
+
+  /* 友情回顧 */
+  const friendshipLine = S.reportSlack>=2
+    ? `這三年，跟${S.friend1Name}、${S.friend2Name}之間偶爾有點小摩擦，但吵吵鬧鬧之後，還是會在走廊上遇到就笑著打招呼。`
+    : `還記得跟${S.friend1Name}、${S.friend2Name}一起走過的這三年嗎？分組報告一起熬夜、揪團買飲料、深夜傳訊息抱怨考試——這些瑣碎的日常，後來想起來，才發現原來是最珍貴的部分。`;
+  card('info','三年的友情',friendshipLine);
+
+  /* 畢業紀念冊留言 */
+  if(!S.earlyEnd){
+    const yb=[];
+    yb.push({name:S.friend1Name, text: S.reportSlack>=2
+      ? '雖然分組報告都是你在扛（笑），但謝謝你這三年還是願意陪在我身邊。畢業快樂，要記得聯絡！'
+      : '還記得我們同桌的第一天嗎？沒想到一轉眼就三年了，謝謝你一直都在，畢業快樂！'});
+    yb.push({name:S.friend2Name, text:'跟你一起熬夜準備報告、揪飲料團購的日子超懷念的，未來也要繼續當朋友喔！'});
+    if(S.inRelationship){
+      yb.push({name:'那個他',text:'謝謝你陪我走過這段高中時光，不管以後怎麼樣，這三年都會是我最珍貴的回憶之一。'});
+    } else if(S.traits && S.traits.single){
+      yb.push({name:'一位曾經很重要的人',text:'雖然我們後來沒有繼續走下去，但還是要謝謝你曾經陪我走過那段日子，祝你前程似錦。'});
+    }
+    const ybHtml=yb.map(m=>`<b>${m.name}</b>：「${m.text}」`).join('<br><br>');
+    card('info','畢業紀念冊',ybHtml);
+  }
 
   /* 2. 學測/統測/分科成績、升學管道 */
   card('gold',label+'：'+scaled+' / '+full+' 級分',`${tier.d}<br><b class="hl">結果：${tier.t}</b>`);
@@ -1159,7 +1498,7 @@ function drawEndingCanvas(result,traitList){
     }
   }
   y+=10;
-  sc.fillStyle='#a7b4c9'; sc.font='11px monospace'; sc.fillText('共走過 18 次段考 ・ SchoolLife v1.0',contentX,y+8);
+  sc.fillStyle='#a7b4c9'; sc.font='11px monospace'; sc.fillText('共走過 3 年六個學期 ・ SchoolLife v1.1',contentX,y+8);
   y+=26;
   const contentH=y;
 
@@ -1256,8 +1595,8 @@ $('btn-start').onclick=()=>{
   $('start').style.display='none';
   $('board').style.display=''; $('act').style.display='';
   board();
-  card('info','入學',`${TRACKN[selTrack]}生活正式開始。${S.name}，接下來的三年、18 次段考，怎麼過是你的選擇。`);
-  nextExam();
+  card('info','入學',`${TRACKN[selTrack]}生活正式開始。${S.name}，接下來的三年六個學期，怎麼過是你的選擇。`);
+  startSemester(1);
 };
 $('help-btn').onclick=()=>{ $('help-overlay').classList.add('open'); };
 $('help-close').onclick=()=>{ $('help-overlay').classList.remove('open'); };

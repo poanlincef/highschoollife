@@ -92,18 +92,27 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 .alloc-row .val{width:22px;text-align:center;font-family:var(--mono);font-weight:700;color:#e6960a}
 .alloc-row.locked{opacity:.5}
 .wk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.presetRow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px}
+.presetLabel{font-size:11.5px;color:var(--dim);margin-right:2px}
+.presetBtn{background:var(--panel2);border:1px solid var(--edge);border-radius:20px;padding:5px 12px;
+  font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;font-family:var(--sans)}
+.presetBtn:active{transform:scale(.96);background:#ffeec4}
 .wk-item{background:var(--panel2);border:1px solid var(--edge);border-radius:8px;padding:8px 9px 7px}
 .wk-item.locked{opacity:.5}
 .wk-item .nm{font-size:12.5px;font-weight:700;line-height:1.3}
 .wk-item .nm small{display:block;font-weight:400;color:var(--dim);font-size:10px;margin-top:2px;line-height:1.3}
 .wk-item .ctr{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
-.wk-item .stepbtn{width:26px;height:26px;border-radius:6px;border:1px solid var(--edge);background:#fff;
-  color:var(--ink);font-size:14px;font-weight:700;cursor:pointer;line-height:1}
-.wk-item .stepbtn:disabled{opacity:.3}
+.wk-item .stepbtn{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--edge);background:#fff;
+  color:var(--ink);font-size:19px;font-weight:900;cursor:pointer;line-height:1;transition:.1s}
+.wk-item .stepbtn:disabled{opacity:.25}
+.wk-item .stepbtn:active{transform:scale(.88)}
 .wk-item .val{font-family:var(--mono);font-weight:700;color:#e6960a;font-size:13px}
 .wk-grid.break-grid .wk-item{background:#fff5ec;border-color:#ffd6b0}
 .wk-grid.break-grid .wk-item .val{color:#e8734a}
 .wk-grid.break-grid .wk-item .stepbtn{border-color:#ffd6b0;background:#fffaf5}
+.wk-item .stepbtn[data-a="+"]{color:var(--mint);border-color:#12b88680;background:#12b88614}
+.wk-item .stepbtn[data-a="-"]{color:var(--coral);border-color:#ff6b5f80;background:#ff6b5f14}
+.wk-item .stepbtn[data-a="+"]:disabled,.wk-item .stepbtn[data-a="-"]:disabled{background:#fff;border-color:var(--edge);color:var(--dim)}
 .poolline.break{color:#e8734a}
 .pt-slider{width:100%;margin-top:9px;accent-color:var(--amber);height:20px;cursor:pointer;display:block}
 .pt-slider:disabled{opacity:.35;cursor:default}
@@ -779,7 +788,7 @@ function checkLoveCrisis(){
   return null;
 }
 
-const REPEATABLE_EVENT_IDS=['family','tutor']; /* 家人相關/課業過低必要事件可以重複觸發，其餘盡量整場只出現一次 */
+const REPEATABLE_EVENT_IDS=['family','tutor','report']; /* 家人相關/課業過低必要事件、分組報告可以重複觸發（分組報告本來就會重複發生），其餘盡量整場只出現一次 */
 function pickPoolEvent(){
   if(S.track==='voc'){
     if(curSem()===3 && !S.usedPoolIds.includes('intern1')){ S.usedPoolIds.push('intern1'); return internshipEvent(); }
@@ -787,11 +796,9 @@ function pickPoolEvent(){
     if(curSem()===6 && !S.usedPoolIds.includes('license2')){ S.usedPoolIds.push('license2'); return licenseEvent(2); }
   }
   let pool=POOL_GENERIC.map(f=>f()).filter(e=>!e.cond||e.cond());
-  /* 高職術科導向：高一高二課業與小組報告佔比較重，增加分組報告出現機率 */
-  if(S.track==='voc' && S.classType==='實作導向' && curSem()<=4){
-    const rep=reportEvent();
-    if(!rep.cond || rep.cond()) pool.push(reportEvent(),reportEvent());
-  }
+  /* 分組報告會重複發生，加權2倍讓它比較有機會累積出神隊友/就你在雷成就 */
+  const rep=reportEvent();
+  if(!rep.cond || rep.cond()) pool.push(reportEvent());
   /* 盡量整場遊戲不重複同一事件（家人/導師約談等必要事件除外） */
   let freshPool=pool.filter(e=>REPEATABLE_EVENT_IDS.includes(e.id) || !S.usedGenericEventIds.includes(e.id));
   if(freshPool.length===0){ S.usedGenericEventIds=[]; freshPool=pool; }
@@ -904,20 +911,34 @@ function allocPanel(pool,dice,cont){
   const managerLock = S.jobTier>=2 && (curSem()===4||curSem()===5);
   const forcedJobMin = managerLock ? Math.min(3,pool) : 0;
   const jobRate = S.jobTier>=2?260:S.jobTier===1?200:150;
-  const jobLabel = S.jobTier>=2?`人際 +、$${jobRate}（小主管，至少投入${forcedJobMin}點）`:S.jobTier===1?`$${jobRate}（正職）`:`$${jobRate}`;
+  const jobLabel = S.jobTier>=2?`人際 <b class="up">↑</b>、$收入（小主管，至少投入${forcedJobMin}點）`:S.jobTier===1?'$收入（正職）':'$收入';
   const cats=[
-    {k:'study',n:'讀書',u:studyMult()>1?`課業 +${(1.3*studyMult()).toFixed(1)}（加乘中）`:'課業 +1.3'},
-    {k:'club',n:'社團',u:presidentLock?`人際 +1.0（社長，至少投入${forcedClubMin}點）`:'人際 +1.0',lock:!S.hasClub},
-    {k:'friend',n:'朋友',u:'人際 +1.15',lock:false},
-    {k:'date',n:S.inRelationship?'約會':'相處',u:S.inRelationship?'感情 +':'感情 +（曖昧升溫）',lock:!(S.inRelationship||S.crushActive)},
+    {k:'study',n:'讀書',u:studyMult()>1?`課業 <b class="up">↑↑</b>（讀書效率提升中）`:`課業 <b class="up">↑</b>`},
+    {k:'club',n:'社團',u:presidentLock?`人際 <b class="up">↑</b>（社長，至少投入${forcedClubMin}點）`:`人際 <b class="up">↑</b>`,lock:!S.hasClub},
+    {k:'friend',n:'朋友',u:`人際 <b class="up">↑</b>`,lock:false},
+    {k:'date',n:S.inRelationship?'約會':'相處',u:`感情 <b class="up">↑</b>${S.inRelationship?'':'（曖昧升溫）'}`,lock:!(S.inRelationship||S.crushActive)},
     {k:'job',n:'打工',u:jobLabel,lock:!S.hasJob},
-    {k:'church',n:'靈修',u:'靈命 +1.3',lock:false},
-    {k:'rest',n:'體力',u:'精力 +4'}
+    {k:'church',n:'靈修',u:`靈命 <b class="up">↑</b>`,lock:false},
+    {k:'rest',n:'體力',u:`精力 <b class="up">↑</b>`}
   ];
+  const openCats=cats.filter(c=>!c.lock);
   const val={study:0,club:forcedClubMin,friend:0,date:0,job:forcedJobMin,church:0,rest:0};
   function used(){ return val.study+val.club+val.friend+val.date+val.job+val.church+val.rest; }
   function poolLineText(remain){
-    return remain>0?`還剩 ${remain} 點沒分配，全部用完才能繼續（不知道怎麼分？剩的可以都丟給「體力」）`:`共 ${pool} 點，已全部分配完畢`;
+    return remain>0?`還剩 ${remain} 點沒分配，全部用完才能繼續（不知道怎麼分？剩的可以都丟給「體力」，或用下面的快速分配）`:`共 ${pool} 點，已全部分配完畢`;
+  }
+  function floorOf(k){ return k==='club'?forcedClubMin:k==='job'?forcedJobMin:0; }
+  function applyPreset(preset){
+    openCats.forEach(c=>{ val[c.k]=floorOf(c.k); });
+    let remaining=pool-openCats.reduce((a,c)=>a+val[c.k],0);
+    if(preset==='study'){ val.study+=remaining; }
+    else if(preset==='rest'){ val.rest+=remaining; }
+    else if(preset==='even'){
+      const n=openCats.length, base=Math.floor(remaining/n);
+      let extra=remaining-base*n;
+      openCats.forEach((c,i)=>{ val[c.k]+=base+(i<extra?1:0); });
+    }
+    render();
   }
   function render(){
     const remain=pool-used();
@@ -927,9 +948,16 @@ function allocPanel(pool,dice,cont){
       const extra= diff>0 ? `<span class="diceEq">＋${diff}（空堂）</span>` : diff<0 ? `<span class="diceEq">（精力不足，縮減 ${-diff}）</span>` : '';
       html+=`<div class="diceRow"><div class="die2">${dice.d1}</div><div class="die2">${dice.d2}</div>${extra}<span class="diceEq">＝</span><span class="diceTotal">${pool} 點</span></div>`;
     }
-    html+=`<div class="poolline">${poolLineText(remain)}</div><div class="wk-grid">`;
+    html+=`<div class="poolline">${poolLineText(remain)}</div>`;
+    html+=`<div class="presetRow">
+      <span class="presetLabel">快速分配：</span>
+      <button class="presetBtn" data-preset="even">平均分配</button>
+      <button class="presetBtn" data-preset="study">全部讀書</button>
+      <button class="presetBtn" data-preset="rest">全部體力</button>
+    </div>`;
+    html+=`<div class="wk-grid">`;
     cats.filter(c=>!c.lock).forEach(c=>{
-      const floor = c.k==='club' ? forcedClubMin : c.k==='job' ? forcedJobMin : 0;
+      const floor = floorOf(c.k);
       html+=`<div class="wk-item">
         <div class="nm">${c.n}<small>${c.u}</small></div>
         <div class="ctr">
@@ -943,6 +971,9 @@ function allocPanel(pool,dice,cont){
     act(html);
     Array.from($('act').querySelectorAll('.stepbtn')).forEach(b=>{
       b.onclick=()=>{ const k=b.dataset.k; if(b.dataset.a==='+')val[k]++; else val[k]--; render(); };
+    });
+    Array.from($('act').querySelectorAll('.presetBtn')).forEach(b=>{
+      b.onclick=()=>{ applyPreset(b.dataset.preset); };
     });
     const goBtn=$('alloc-go');
     if(!goBtn.disabled){
@@ -1124,7 +1155,7 @@ function checkTraits(){
   if(S.lowMoneyCount>=3) traitCard('brokewallet','錢包扁扁','荷包長期見底，練就一身省錢功夫。');
   if(S.cumJobPoints>=55) traitCard('workhard','打工達人','三年累積的工讀時數，換算成經驗值也很可觀。');
   if(S.lowEnergyCount>=3) traitCard('burntout','蠟燭多頭燒','精力一次次見底又撐過來，體力被鍛鍊得驚人。');
-  if(S.reportHelp>=4 && S.reportSlack===0) traitCard('teammate','神隊友','每次分組報告都扛下最多，組員都記得你的好。');
+  if(S.reportHelp>=2 && S.reportSlack===0) traitCard('teammate','神隊友','每次分組報告都扛下最多，組員都記得你的好。');
   if(S.reportSlack>=2) traitCard('freeloader','就你在雷','分組報告常常擺爛，組員名單上偷偷把你劃掉。');
   if(S.danceCaptain) traitCard('danceleader','舞蹈隊長','校慶舞蹈的靈魂人物，畢業紀念冊上一定有你。');
   if(S.inRelationship) traitCard('inlove','戀愛小狗','高中生活多了一個人分享喜怒哀樂，整天黏在一起。');

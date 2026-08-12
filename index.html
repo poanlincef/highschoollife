@@ -280,7 +280,7 @@ function divider(t){
 function examLabel(){
   const semIdx=Math.min(6,Math.max(1,Math.ceil(S.examIndex/2)));
   const isEnd=S.examIndex%2===0;
-  return SEMN[semIdx-1]+' '+(isEnd?'期末':'期初');
+  return SEMN[semIdx-1]+' '+(isEnd?'期末考前':'期初');
 }
 function board(){
   $('bd-study').textContent=Math.round(S.study);
@@ -603,7 +603,7 @@ function datingBeginsEvent(){
     ]};
 }
 function serveEvent(){
-  return {id:'serve',cond:()=>S.inChurch,title:'教會服事邀約',
+  return {id:'serve',cond:()=>S.inChurch && S.serviceTier===0,title:'教會服事邀約',
     desc:'牧者問你要不要在主日中擔任服事（司琴/主持/小組長），需要額外時間準備。',
     choices:[
       {t:'接下服事',s:'靈命 +多，精力 -',main:true,f:()=>{ applyEff({faith:7,energy:-4}); card('good','接下服事','答應了服事，準備過程雖然累，但很有意義。靈命 <b class="up">+7</b>。'); board(); }},
@@ -684,7 +684,35 @@ function basketballEvent(){
           board(); }}
     ]};
 }
-const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent,basketballEvent];
+function familyTimeEvent(){
+  return {id:'familytime',title:'難得的家庭時光',
+    desc:'難得爸媽今天都在家，晚餐時間，餐桌上飄著久違的家常菜香味，媽媽隨口問起你最近在忙什麼。',
+    choices:[
+      {t:'放下手機，好好聊聊',s:'家庭 +、精力 -小',main:true,f:()=>{
+          S.familyScore=clamp(S.familyScore+1.5,0,10); applyEff({energy:-1});
+          card('good','家庭時光','你難得放下手機，跟爸媽聊了聊最近學校的事，聊著聊著，發現爸媽其實比想像中更懂你。');
+          board(); }},
+      {t:'隨便應付幾句，回房間',s:'家庭 -小',warn:true,f:()=>{
+          S.familyScore=clamp(S.familyScore-0.5,0,10);
+          card('info','匆匆帶過','隨口應付了幾句，就回房間繼續做自己的事。餐桌上，爸媽的對話聲漸漸遠去。');
+          board(); }}
+    ]};
+}
+function choresEvent(){
+  return {id:'chores',title:'家裡需要幫忙',
+    desc:'媽媽在客廳喊了一聲，說今天家裡有點忙，問你能不能幫忙做點家事。',
+    choices:[
+      {t:'放下手邊的事，主動幫忙',s:'家庭 +、精力 -',main:true,f:()=>{
+          S.familyScore=clamp(S.familyScore+1,0,10); applyEff({energy:-3});
+          card('good','幫忙做家事','捲起袖子幫忙洗碗、收衣服，媽媽笑著說你長大了、懂事了不少。');
+          board(); }},
+      {t:'說自己在忙，先婉拒',s:'家庭 -',warn:true,f:()=>{
+          S.familyScore=clamp(S.familyScore-1,0,10);
+          card('bad','婉拒幫忙','隨口說了句「等一下」，結果一等就是好幾個小時沒去幫忙，媽媽的臉色不太好看。');
+          board(); }}
+    ]};
+}
+const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent,basketballEvent,familyTimeEvent,choresEvent];
 
 /* 告白：依年級門檻觸發（高一人際>45，高二/高三人際>60），還沒交往的話一個年級只會問一次 */
 function curSem(){ return Math.min(6,Math.max(1,Math.ceil(S.examIndex/2))); }
@@ -1088,13 +1116,20 @@ function pickEventForSlot(semIdx){
   }
   return pickPoolEvent();
 }
-function runEventSlots(semIdx,remaining,cont){
-  if(remaining<=0){ cont(); return; }
+const SEM_WELCOME=[
+  '高中第一個學期就要開始了，要好好想想接下來的高中生活可以怎麼投入……',
+  '高一下學期開始，上個學期的步調大概摸熟了，這學期想怎麼調整？',
+  '升上高二，多了新的科目、新的分組，這學期想把時間放在哪裡？',
+  '高二下學期，校慶、社團活動接連而來，這學期特別忙碌，得想清楚怎麼分配時間。',
+  '高三上學期開始，考試的壓力漸漸逼近，這學期的每一分投入都更關鍵了。',
+  '高三下，最後一個學期了，該怎麼安排這段收尾的日子？'
+];
+function runSingleEvent(semIdx,cont){
   const ev=pickEventForSlot(semIdx);
   card('info',ev.title,ev.desc);
-  chooseForcedEventThen(ev, ()=>runEventSlots(semIdx,remaining-1,cont));
+  chooseForcedEventThen(ev,cont);
 }
-function checkpointFlow(semIdx,which){
+function welcomeThenAlloc(semIdx,which,cont){
   S.examIndex++;
   decayStats();
   board();
@@ -1104,47 +1139,49 @@ function checkpointFlow(semIdx,which){
     if(S.energy<=8){ finalPool=Math.max(3,finalPool-4); card('bad','過度疲勞','精力幾乎見底，這次能分配的時間點數變少了。'); }
     allocPanel(finalPool,roll,(val)=>{
       resolveExam(val,which);
-      if(which===1){
-        setTimeout(()=>runEventSlots(semIdx,3,()=>checkpointFlow(semIdx,2)),50);
-      } else {
-        semesterSummary(semIdx);
-        setTimeout(()=>{
-          semesterEndHooks(semIdx,()=>{
-            if(S.expelled) return; /* endGame 已經在 academicCrisisCheck 內觸發 */
-            if(S.examIndex>=12){ endGame(); return; }
-            const brk=BREAK_AFTER[S.examIndex];
-            const afterBreak=()=>{
-              if(S.examIndex===10 && !S.starTaken){
-                offerEarlyEnding(()=>startSemester(semIdx+1));
-              } else {
-                startSemester(semIdx+1);
-              }
-            };
-            if(brk){
-              breakEvent(brk,()=>{
-                if(S.examIndex===8 && S.hasClub && S.hasJob && !S.summerBurnoutDone){
-                  S.summerBurnoutDone=true;
-                  summerBurnoutEvent(afterBreak);
-                } else {
-                  afterBreak();
-                }
-              });
-            } else {
-              afterBreak();
-            }
-          });
-        },50);
-      }
+      cont();
     });
   };
-  if(which===2){
-    choose('要不要在期末前全力衝刺？',[
-      {t:'全力衝刺，拚一波',s:'讀書效率 +、精力 -',main:true,f:()=>{ S.sprintActive=true; applyEff({energy:-3}); card('good','全力衝刺','這幾天卯足全力，讀書效率會提升一些。精力 <b class="dn">-3</b>。'); board(); proceedToAlloc(); }},
-      {t:'維持步調，量力而為',f:()=>{ card('info','維持步調','決定按照原本的節奏走，不硬拚。'); proceedToAlloc(); }}
+  if(which===1){
+    card('info','新學期開始',SEM_WELCOME[semIdx-1]);
+    choose(SEMN[semIdx-1],[
+      {t:'迎接新學期',main:true,f:()=>{ proceedToAlloc(); }}
     ]);
   } else {
-    proceedToAlloc();
+    choose('期末考要到了，該不該把握期末考前最後衝刺的機會？',[
+      {t:'全力衝刺，拚一波',s:'讀書效率 +、精力 -，也許可以拯救這學期也不一定',main:true,f:()=>{ S.sprintActive=true; applyEff({energy:-3}); card('good','全力衝刺','這幾天卯足全力，讀書效率會提升一些。精力 <b class="dn">-3</b>。'); board(); proceedToAlloc(); }},
+      {t:'維持步調，量力而為',f:()=>{ card('info','維持步調','決定按照原本的節奏走，不硬拚。'); proceedToAlloc(); }}
+    ]);
   }
+}
+function afterSemesterCheckpoints(semIdx){
+  semesterSummary(semIdx);
+  setTimeout(()=>{
+    semesterEndHooks(semIdx,()=>{
+      if(S.expelled) return; /* endGame 已經在 academicCrisisCheck 內觸發 */
+      if(S.examIndex>=12){ endGame(); return; }
+      const brk=BREAK_AFTER[S.examIndex];
+      const afterBreak=()=>{
+        if(S.examIndex===10 && !S.starTaken){
+          offerEarlyEnding(()=>startSemester(semIdx+1));
+        } else {
+          startSemester(semIdx+1);
+        }
+      };
+      if(brk){
+        breakEvent(brk,()=>{
+          if(S.examIndex===8 && S.hasClub && S.hasJob && !S.summerBurnoutDone){
+            S.summerBurnoutDone=true;
+            summerBurnoutEvent(afterBreak);
+          } else {
+            afterBreak();
+          }
+        });
+      } else {
+        afterBreak();
+      }
+    });
+  },50);
 }
 function semesterEndHooks(semIdx,cont){
   const steps=[];
@@ -1274,7 +1311,19 @@ function offerEarlyEnding(cont){
 }
 function startSemester(semIdx){
   if(semIdx>6) return;
-  semesterIntro(semIdx, ()=>checkpointFlow(semIdx,1));
+  semesterIntro(semIdx, ()=>{
+    runSingleEvent(semIdx, ()=>{
+      welcomeThenAlloc(semIdx,1, ()=>{
+        runSingleEvent(semIdx, ()=>{
+          welcomeThenAlloc(semIdx,2, ()=>{
+            runSingleEvent(semIdx, ()=>{
+              afterSemesterCheckpoints(semIdx);
+            });
+          });
+        });
+      });
+    });
+  });
 }
 function semesterSummary(semIdx){
   const s2=S.scores.slice(-2);

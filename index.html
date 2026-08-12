@@ -244,7 +244,7 @@ function newState(name,track,per){
     sprintActive:false, danceDone:false, showcaseDone:false, farewellDone:false,
     /* 人際子數值（0-10） */
     loveScore:5, clubScore:0, familyScore:5,
-    crushActive:false, crushCooldown:0,
+    crushActive:false, crushCooldown:0, crushDeclinedAfterPursue:false,
     /* 社團幹部/社長 */
     clubOfficer:false, clubPresident:false, officerOffered:false, presidentOffered:false, clubSwitchOffered:false,
     /* 打工升遷 */
@@ -344,7 +344,8 @@ function applyEff(eff){
 const TRAIT_ICON={bookworm:'📚',popular:'❄️',faithful:'✝️',brokewallet:'👛',workhard:'💪',
   burntout:'🕯️',teammate:'🤝',freeloader:'💣',danceleader:'💃',inlove:'🐶',
   internstar:'🔧',licensepro:'📜',darkhorse:'🐎',perfectattend:'🏅',loner:'🌫️',cheap:'🪙',single:'👑',richking:'💰',daiyu:'🥀',
-  lifechange:'🕊️',tightrope:'⚖️',president:'🎖️',jobmanager:'👔',groupleader:'🎶',timemaster:'⏰'};
+  lifechange:'🕊️',tightrope:'⚖️',president:'🎖️',jobmanager:'👔',groupleader:'🎶',timemaster:'⏰',
+  loveliar:'🎣',lovestrong:'💎'};
 function traitCard(key,name,desc){
   if(S.traits[key])return;
   const icon=TRAIT_ICON[key]||'⭐';
@@ -611,6 +612,17 @@ function crushEvent(){
       {t:'先觀望，不主動',f:()=>{ card('info','先觀望','想了想，還是決定先不要輕舉妄動，把這份心動悄悄收在心裡，繼續過自己的生活。'); }}
     ]};
 }
+function confessedToEvent(){
+  return {id:'confessed',title:'有人跟你告白',
+    desc:'放學後，一位平常沒什麼交集的同學攔住了你，臉紅紅地遞出一張紙條，說鼓起了好大的勇氣，想問你要不要跟他交往看看。',
+    choices:[
+      {t:'答應交往',s:'人際 +多，直接進入交往關係',main:true,f:()=>{
+          S.inRelationship=true; S.loveScore=7; applyEff({social:6});
+          card('gold','戀愛開始',`看著對方緊張又期待的眼神，你點了點頭。以後時間分配裡會多一個「約會」選項，記得留時間陪他，不然感情會慢慢變淡。人際 <b class="up">+6</b>。`);
+          board(); }},
+      {t:'婉拒',f:()=>{ applyEff({social:1}); card('info','婉拒','你溫柔地拒絕了，對方雖然失落，但還是笑著說沒關係，往後見面也還是會點頭打招呼。'); board(); }}
+    ]};
+}
 function datingBeginsEvent(){
   return {id:'datingbegins',title:'感情升溫',
     desc:'這陣子跟他相處得越來越自然，一起走的路變長了，聊天的話題也越來越沒有邊界。這天放學，兩人並肩走在夕陽下的人行道上，他忽然停下腳步，深吸一口氣，紅著臉問你：「我們，要不要正式在一起？」',
@@ -619,7 +631,7 @@ function datingBeginsEvent(){
         f:()=>{ S.inRelationship=true; S.crushActive=false; applyEff({social:8});
           card('gold','戀愛開始',`你點了點頭，兩人相視而笑，路燈這時剛好亮起。以後時間分配裡會多一個「約會」選項，記得留時間陪他，不然感情會慢慢變淡。人際 <b class="up">+8</b>。`);
           board(); }},
-      {t:'婉拒，維持朋友就好',f:()=>{ S.crushActive=false; S.loveScore=clamp(S.loveScore-3,0,10); applyEff({social:2}); card('info','婉拒','你輕輕搖了搖頭，「還是先當朋友就好」。對方愣了一下，勉強笑了笑說沒關係，但那之後的沉默，比平常都要漫長。'); board(); }}
+      {t:'婉拒，維持朋友就好',f:()=>{ S.crushActive=false; S.crushDeclinedAfterPursue=true; S.loveScore=clamp(S.loveScore-3,0,10); applyEff({social:2}); card('info','婉拒','你輕輕搖了搖頭，「還是先當朋友就好」。對方愣了一下，勉強笑了笑說沒關係，但那之後的沉默，比平常都要漫長。'); board(); }}
     ]};
 }
 function serveEvent(){
@@ -732,7 +744,23 @@ function choresEvent(){
           board(); }}
     ]};
 }
-const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent,basketballEvent,familyTimeEvent,choresEvent];
+function sleepInEvent(){
+  return {id:'sleepin',title:'再睡5分鐘',
+    desc:'早上被鬧鐘叫醒，眼皮還是很重，賴床的誘惑實在太強大了，這時你決定：',
+    choices:[
+      {t:'直接起床出門上學',s:'結果看運氣',main:true,f:()=>{
+          if(chance(80)){ applyEff({study:3}); card('good','準時上學','硬是撐著爬起來，衝去學校剛好趕上早自習，今天的內容一點都沒漏接。課業 <b class="up">+3</b>。'); }
+          else { applyEff({social:4}); card('good','原來是假日','風塵僕僕跑到學校，才發現校門口冷冷清清——原來今天是星期六。你把這段糗事拍成限動自嘲了一番，意外收穫一堆留言。人際 <b class="up">+4</b>。'); }
+          board(); }},
+      {t:'再睡5分鐘',s:'結果難料，可能小賺也可能大虧',f:()=>{
+          const r=ri(1,3);
+          if(r===1){ applyEff({energy:4}); card('good','小瞇一下','真的只瞇了一下下，起床時精神反而更好，整個人神清氣爽。精力 <b class="up">+4</b>。'); }
+          else if(r===2){ applyEff({money:-100}); card('bad','差點遲到','一不小心睡過頭多了30分鐘，眼看要遲到了，只好緊急叫車救援，荷包瞬間縮水。金錢 <b class="dn">-100</b>。'); }
+          else { applyEff({study:-4,energy:6}); card('bad','睡到中午','鬧鐘按掉之後直接昏睡到中午，醒來才驚覺已經蹺了大半天課，錯過的進度只能之後自己補。課業 <b class="dn">-4</b>，精力 <b class="up">+6</b>。'); }
+          board(); }}
+    ]};
+}
+const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent,basketballEvent,familyTimeEvent,choresEvent,sleepInEvent];
 
 /* 告白：依年級門檻觸發（高一人際>45，高二/高三人際>60），還沒交往的話一個年級只會問一次 */
 function curSem(){ return Math.min(6,Math.max(1,Math.ceil(S.examIndex/2))); }
@@ -1100,6 +1128,7 @@ function checkTraits(){
   if(S.reportSlack>=2) traitCard('freeloader','就你在雷','分組報告常常擺爛，組員名單上偷偷把你劃掉。');
   if(S.danceCaptain) traitCard('danceleader','舞蹈隊長','校慶舞蹈的靈魂人物，畢業紀念冊上一定有你。');
   if(S.inRelationship) traitCard('inlove','戀愛小狗','高中生活多了一個人分享喜怒哀樂，整天黏在一起。');
+  if(S.crushDeclinedAfterPursue) traitCard('loveliar','感情騙子','曾經轟轟烈烈展開追求，感情升溫的那一刻卻按下了婉拒鍵——江湖人稱「愛情裡的已讀不回大師」。');
   if(S.internshipGood>=1 && S.track==='voc') traitCard('internstar','實習之星','校外實習的表現讓師傅印象深刻。');
   if(S.licenseCount>=2 && S.track==='voc') traitCard('licensepro','證照達人','手上多了不只一張技術士證照。');
   if(S.cheapCount>=3) traitCard('cheap','小氣巴拉','出去玩總是讓朋友先出錢，荷包是保住了，但朋友心裡都有數。');
@@ -1144,7 +1173,7 @@ function pickEventForSlot(semIdx){
   }
   if(checkCrushTrigger()){
     S.confessAskedGrade = curSem()<=2?1:(curSem()<=4?2:3);
-    return crushEvent();
+    return chance(50) ? confessedToEvent() : crushEvent();
   }
   const crisis=checkLoveCrisis();
   if(crisis){
@@ -1486,6 +1515,7 @@ function endGame(){
   if(S.social<=25) traitCard('loner','邊緣人','三年下來，朋友圈始終沒有太熱鬧，但也習慣了自己的步調。');
   if(S.discCampEveryBreak) traitCard('lifechange','生命翻轉','每一個寒暑假都選擇參加門徒營，信仰的根基在這幾年扎得特別深。');
   if(S.lowStudyCheckpoints>=6) traitCard('tightrope','如履薄冰','我的高中生涯如履薄冰，你說我能順利畢業嗎？');
+  if(S.inRelationship && S.enteringHigh3BreakupDone) traitCard('lovestrong','情比金堅','一路從高三上撐到畢業，不管課業、社團、打工再怎麼忙，這段感情始終沒有被時間磨掉。');
   checkTraits();
   divider('畢業');
   const endingAnchor=$('log').lastElementChild; /* 記住結局開頭位置，最後要捲回這裡而不是停在圖片 */

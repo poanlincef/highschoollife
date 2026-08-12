@@ -339,7 +339,7 @@ function applyEff(eff){
 const TRAIT_ICON={bookworm:'📚',popular:'❄️',faithful:'✝️',brokewallet:'👛',workhard:'💪',
   burntout:'🕯️',teammate:'🤝',freeloader:'💣',danceleader:'💃',inlove:'🐶',
   internstar:'🔧',licensepro:'📜',darkhorse:'🐎',perfectattend:'🏅',loner:'🌫️',cheap:'🪙',single:'👑',richking:'💰',daiyu:'🥀',
-  lifechange:'🕊️',tightrope:'⚖️',president:'🎖️',jobmanager:'👔',groupleader:'🎶'};
+  lifechange:'🕊️',tightrope:'⚖️',president:'🎖️',jobmanager:'👔',groupleader:'🎶',timemaster:'⏰'};
 function traitCard(key,name,desc){
   if(S.traits[key])return;
   const icon=TRAIT_ICON[key]||'⭐';
@@ -671,7 +671,20 @@ function giftEvent(){
       {t:'這次不參加',s:'金錢 +',f:()=>{ applyEff({social:-1}); card('info','沒有參加','決定這次先不跟，把零用錢留著。人際小幅 <b class="dn">-1</b>。'); board(); }}
     ]};
 }
-const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent];
+function basketballEvent(){
+  return {id:'basketball',title:'下課同學找你去打球',
+    desc:'下課鐘一響，幾個同學就衝過來找你：「欸，要不要一起去打球？」操場上已經有人開始運球熱身了。',
+    choices:[
+      {t:'去，跟大家一起打',s:'人際 +，但有受傷風險',main:true,f:()=>{
+          if(chance(80)){ applyEff({social:5,energy:-3}); card('good','打球開心','在球場上揮汗如雨，跟同學一起拚了一場精彩的鬥牛，笑鬧聲傳遍整個操場。人際 <b class="up">+5</b>，精力 <b class="dn">-3</b>。'); }
+          else { applyEff({social:2,study:-3,energy:-6}); S.sickLeaveCount++; card('bad','打球受傷','搶籃板時不小心跟人撞在一起，腳踝腫了一圈，只好去保健室冰敷，接下來幾天都得請假休養，連上課都有點分心。課業 <b class="dn">-3</b>，精力 <b class="dn">-6</b>。'); }
+          board(); }},
+      {t:'不去，留在教室讀書',s:'人際 -，課業 +',warn:true,f:()=>{
+          applyEff({social:-2,study:2}); card('info','留在教室','婉拒了邀約，留在座位上繼續啃書，窗外傳來同學的歡笑聲，多少有點寂寞。課業 <b class="up">+2</b>，人際 <b class="dn">-2</b>。');
+          board(); }}
+    ]};
+}
+const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent,basketballEvent];
 
 /* 告白：依年級門檻觸發（高一人際>45，高二/高三人際>60），還沒交往的話一個年級只會問一次 */
 function curSem(){ return Math.min(6,Math.max(1,Math.ceil(S.examIndex/2))); }
@@ -1023,6 +1036,7 @@ function checkTraits(){
   if(S.sickCount>=5) traitCard('daiyu','林黛玉','整天病懨懨，風吹了就倒，卻也把生病活成了一種日常美學。');
   if(S.clubPresident) traitCard('president','社團社長','扛下了社長的責任，高二有一大段時間都獻給了這個社團。');
   if(S.jobTier>=2) traitCard('jobmanager','打工小主管','從工讀生一路做到值班主管，職場歷練比同齡人多了不少。');
+  if(S.study>=70 && S.social>=70 && S.faith>=70) traitCard('timemaster','時間管理大師','課業、人際、靈命三頭都顧到了，把時間安排得恰到好處。');
 }
 
 /* ===== 主流程 ===== */
@@ -1285,11 +1299,11 @@ const VOC_75_TIERS=[
   {min:0,t:'考慮直接就業或重考',d:'統測沒有考出理想成績，也許直接帶著高職學到的技術投入職場累積實務經驗也是好選擇。'}
 ];
 const FENKE_240_TIERS=[
-  {min:205,t:'頂尖頂級（台清交成政／台科北科）',d:'實力極度穩定，心態強大，靠分科測驗的難題展現鑑別度，逆轉拚出頂尖落點。'},
-  {min:170,t:'前段優質（中字輩／國立前段／明志）',d:'觀念清晰，高三下心態沒崩，靠分科測驗的專業科目補回學測的落差。'},
-  {min:135,t:'中段穩定（地名國立／逢甲輔仁／高科）',d:'基礎中等，這次分科測驗保住了國立大學或熱門私立科系的門票。'},
-  {min:95,t:'後段普通（一般私立大專校院）',d:'基本功較弱，分科測驗題目偏難，落點跟學測時相差不大。'},
-  {min:0,t:'建議重考或考慮就業',d:'不適應分科測驗的題型，也許轉戰實務職場或全面重考會是更好的選擇。'}
+  {min:205,t:'頂尖國立大學熱門科系',d:'實力極度穩定，心態強大，靠分科測驗的難題展現鑑別度，逆轉拚出頂尖落點。'},
+  {min:170,t:'優質國立大學／頂尖私立大學',d:'觀念清晰，高三下心態沒崩，靠分科測驗的專業科目補回學測的落差。'},
+  {min:135,t:'一般國立大學／優質私立大學',d:'基礎中等，這次分科測驗保住了不錯的落點。'},
+  {min:95,t:'一般私立大學／科系',d:'基本功較弱，分科測驗題目偏難，落點跟學測時相差不大。'},
+  {min:0,t:'落點不理想，考慮重考或其他出路',d:'不適應分科測驗的題型，也許轉戰實務職場或全面重考會是更好的選擇。'}
 ];
 function scaleAndTier(raw0to100,mode){
   const full = mode==='gen60'?60 : mode==='voc75'?75 : 240;
@@ -1319,6 +1333,7 @@ function endGame(){
   if(S.lowStudyCheckpoints>=6) traitCard('tightrope','如履薄冰','我的高中生涯如履薄冰，你說我能順利畢業嗎？');
   checkTraits();
   divider(S.earlyEnd?'提早結局':'畢業');
+  const endingAnchor=$('log').lastElementChild; /* 記住結局開頭位置，最後要捲回這裡而不是停在圖片 */
   if(S.earlyEnd){
     card('info','提早收尾','決定不走完最後一個學期，就用高三上結束這一刻的自己，做為這段故事的結局。');
   } else {
@@ -1388,6 +1403,7 @@ function endGame(){
     card('info','畢業結算圖','（此裝置無法產生結算圖片，但你的高中人生紀錄都在上面了。）');
   }
   renderRestartCard();
+  setTimeout(()=>{ if(endingAnchor && endingAnchor.scrollIntoView){ endingAnchor.scrollIntoView({behavior:'smooth',block:'start'}); } },80);
 }
 
 function drawEndingCanvas(result,traitList){

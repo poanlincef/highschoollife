@@ -659,7 +659,19 @@ function friendPostEvent(){
       {t:'在底下留言嘲笑他',s:'人際 -，但精力 +（省事）',warn:true,f:()=>{ applyEff({social:-5,energy:2}); card('bad','嘲笑朋友',`忍不住留了幾句酸話。${n}看到後已讀不回，接下來幾天在班上遇到，眼神都刻意避開你，氣氛有點尷尬。人際 <b class="dn">-5</b>。`); board(); }}
     ]};
 }
-const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent];
+function giftEvent(){
+  const n=pick([S.friend1Name,S.friend2Name]);
+  return {id:'gift',title:'班上要合送生日禮物',
+    desc:`班群裡有人發起，說${n}下週生日，想揪全班一起合送一份禮物，一人大概要出150元，要不要一起參一份？`,
+    choices:[
+      {t:'一起出錢，參一份',s:'人際 +、金錢 -',main:true,f:()=>{
+          if(S.money>=150){ applyEff({social:3,money:-150}); card('good','合送禮物',`大家湊錢買了一份精緻的小禮物，${n}拆開的時候開心得合不攏嘴，你也覺得參與感十足。人際 <b class="up">+3</b>，金錢 <b class="dn">-150</b>。`); }
+          else { applyEff({social:-2}); card('bad','手頭緊',`很想參一份，但這個月的零用錢已經花得差不多了，只好婉拒。看著大家一起挑禮物，多少覺得有點不好意思跟失落。人際 <b class="dn">-2</b>。`); }
+          board(); }},
+      {t:'這次不參加',s:'金錢 +',f:()=>{ applyEff({social:-1}); card('info','沒有參加','決定這次先不跟，把零用錢留著。人際小幅 <b class="dn">-1</b>。'); board(); }}
+    ]};
+}
+const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent];
 
 /* 告白：依年級門檻觸發（高一人際>45，高二/高三人際>60），還沒交往的話一個年級只會問一次 */
 function curSem(){ return Math.min(6,Math.max(1,Math.ceil(S.examIndex/2))); }
@@ -802,7 +814,7 @@ function allocPanel(pool,dice,cont){
     {k:'study',n:'讀書',u:studyMult()>1?`課業 +${(1.3*studyMult()).toFixed(1)}（加乘中）`:'課業 +1.3'},
     {k:'club',n:'社團',u:presidentLock?`人際 +1.0（社長，至少投入${forcedClubMin}點）`:'人際 +1.0',lock:!S.hasClub},
     {k:'friend',n:'朋友',u:'人際 +1.15',lock:false},
-    {k:'date',n:'約會',u:'感情 +',lock:!S.inRelationship},
+    {k:'date',n:S.inRelationship?'約會':'相處',u:S.inRelationship?'感情 +':'感情 +（曖昧升溫）',lock:!(S.inRelationship||S.crushActive)},
     {k:'job',n:'打工',u:jobLabel,lock:!S.hasJob},
     {k:'church',n:'靈修',u:'靈命 +1.3',lock:false},
     {k:'rest',n:'體力',u:'精力 +4'}
@@ -853,10 +865,10 @@ const BREAK_CATS={
   discipleship:{n:'高中門徒營',sub:'靈命+2/週・精力-1/週',eff:{faith:2,energy:-1}},
   jobweek:{n:'打工',sub:'金錢+220/週・精力-2/週',eff:{money:220,energy:-2}},
   lazy:{n:'在家滑手機睡到飽',sub:'精力+5/週・課業-1/週・人際-1/週',eff:{energy:5,study:-1,social:-1}},
-  hangout:{n:'跟朋友出去玩',sub:'人際+2/週・金錢-100/週',eff:{social:2,money:-100}},
-  cram:{n:'補習',sub:'課業+2.5/週・金錢-260/週・精力-1/週',eff:{study:2.5,money:-260,energy:-1}},
+  hangout:{n:'跟朋友出去玩',sub:'人際+2/週・金錢-150/週',eff:{social:2,money:-150}},
+  cram:{n:'補習',sub:'課業+2.5/週・精力-1/週（家裡出錢）',eff:{study:2.5,energy:-1},familyGate:4},
   kidscamp:{n:'教會兒童營（服事）',sub:'靈命+2/週・人際+1/週・精力-2/週',eff:{faith:2,social:1,energy:-2}},
-  familytrip:{n:'家中出遊',sub:'人際+1.5/週・精力+2/週・金錢-220/週',eff:{social:1.5,energy:2,money:-220}},
+  familytrip:{n:'家中出遊',sub:'人際+1.5/週・精力+2/週・家庭+0.3/週（家裡出錢）',eff:{social:1.5,energy:2},familyBonus:0.3},
   rest:{n:'放鬆休息',sub:'精力+3/週',eff:{energy:3}}
 };
 const WINTER_KEYS=['camp','clubtrip','discipleship','jobweek','lazy','hangout','cram','rest'];
@@ -875,6 +887,10 @@ function weekAllocPanel(type,weeks,cont){
     keys.forEach(kk=>{ if(kk==='hangout')return; const cc=BREAK_CATS[kk]; if(cc.eff.money<0) committed+=-cc.eff.money*val[kk]; });
     return committed+(-c.eff.money) > S.money;
   }
+  function familyLocked(k){
+    const c=BREAK_CATS[k];
+    return c.familyGate!==undefined && S.familyScore<c.familyGate;
+  }
   function poolLineText(remain){
     return remain>0?`還剩 ${remain} 週沒安排，全部用完才能繼續（不知道怎麼排？剩的可以都丟給「放鬆休息」）`:`共 ${weeks} 週，已全部安排完畢`;
   }
@@ -884,14 +900,16 @@ function weekAllocPanel(type,weeks,cont){
     keys.forEach(k=>{
       const c=BREAK_CATS[k];
       const clubLocked=c.lockKey && !S[c.lockKey];
-      const mLocked=!clubLocked && moneyLocked(k);
-      const subText = clubLocked?'尚未開放':(mLocked?'金錢不足（跟家人關係好可以請款）':c.sub);
-      html+=`<div class="wk-item${clubLocked?' locked':''}">
+      const famLocked=!clubLocked && familyLocked(k);
+      const mLocked=!clubLocked && !famLocked && moneyLocked(k);
+      const hardLocked = clubLocked||famLocked;
+      const subText = clubLocked?'尚未開放':famLocked?'家人現在不太想額外花錢（跟家人關係好一點再說）':(mLocked?'金錢不足（跟家人關係好可以請款）':c.sub);
+      html+=`<div class="wk-item${hardLocked?' locked':''}">
         <div class="nm">${c.n}<small>${subText}</small></div>
         <div class="ctr">
-          <button class="stepbtn" data-a="-" data-k="${k}" ${clubLocked||val[k]<=0?'disabled':''}>−</button>
+          <button class="stepbtn" data-a="-" data-k="${k}" ${hardLocked||val[k]<=0?'disabled':''}>−</button>
           <div class="val">${val[k]}</div>
-          <button class="stepbtn" data-a="+" data-k="${k}" ${clubLocked||remain<=0||mLocked?'disabled':''}>＋</button>
+          <button class="stepbtn" data-a="+" data-k="${k}" ${hardLocked||remain<=0||mLocked?'disabled':''}>＋</button>
         </div>
       </div>`;
     });
@@ -915,6 +933,7 @@ function weekAllocPanel(type,weeks,cont){
           }
           Object.keys(c.eff).forEach(stat=>{ total[stat]=(total[stat]||0)+c.eff[stat]*n; });
           if(k==='jobweek')S.cumJobPoints+=n*2;
+          if(c.familyBonus) S.familyScore=clamp(S.familyScore+c.familyBonus*n,0,10);
         });
         if(!val.discipleship) S.discCampEveryBreak=false; /* 生命翻轉：每個寒暑假都要參加門徒營 */
         applyEff(total);
@@ -962,6 +981,8 @@ function resolveExam(val,which){
   if(S.inRelationship){
     if(val.date>0){ S.loveScore=clamp(S.loveScore+val.date*1.2,0,10); applyEff({social:val.date*0.5}); }
     else { S.loveScore=clamp(S.loveScore-2,0,10); }
+  } else if(S.crushActive && val.date>0){
+    S.loveScore=clamp(S.loveScore+val.date*1.2,0,10); /* 曖昧期主動相處，加速升溫 */
   }
   /* 精力消耗 */
   const spentEnergy=val.study*3+val.club*2.5+val.friend*1.5+(val.date||0)*1.5+val.job*3+val.church*1;

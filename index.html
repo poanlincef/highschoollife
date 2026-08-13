@@ -551,6 +551,24 @@ function sickWithdrawEvent(){
           board(); }}
     ]};
 }
+function autoSimulateRemainingSemesters(){
+  /* 快轉結局用：剩下的學期沒有真的玩過，粗略模擬一下讓成績總覽不會開天窗 */
+  const startSem=curSem();
+  for(let s=startSem+1;s<=6;s++){
+    decayStats(); decayStats(); /* 粗略模擬這學期兩次分配都心不在焉、沒有真的投入 */
+    const semScores=[];
+    for(let i=0;i<3;i++){
+      const fatigue=S.energy<25?(25-S.energy)*0.5:0;
+      const score=clamp(Math.round(S.study*0.85+18+N0(6)-fatigue),0,100);
+      S.scores.push(score);
+      semScores.push(score);
+    }
+    const avg=Math.round(semScores.reduce((a,b)=>a+b,0)/semScores.length);
+    S.semAverages.push({sem:SEMN[s-1],avg});
+  }
+  S.examIndex=12;
+  board();
+}
 function noAchievementCheck(next){
   if(Object.keys(S.traits).length===0 && !S.dazedOffered){
     S.dazedOffered=true;
@@ -560,7 +578,7 @@ function noAchievementCheck(next){
           S.dazedTaken=true;
           card('bad','渾渾噩噩','你合上了課本，看著窗外發呆了很久。高中生活好像就這樣過去了，沒什麼特別深刻的記憶，但好像也沒什麼好後悔的——這就是你選擇的步調。');
           traitCard('lifemontage','人生跑馬燈','高一到高二上，日子過得像按下快轉鍵一樣模糊，回過神來，已經來到了故事的終點。');
-          board();
+          autoSimulateRemainingSemesters();
           setTimeout(()=>endGame(),300); }},
       {t:'打起精神，好好過剩下的高中生活',main:true,f:()=>{
           card('good','打起精神','你甩了甩頭，重新坐直身子。「不能再這樣下去了」——你在心裡告訴自己，開始認真思考接下來每一次的選擇。');
@@ -1557,30 +1575,6 @@ function computePrelimGenScore(){
   return scaleAndTier(raw,'gen60').scaled;
 }
 function endGame(){
-  if(S.expelled){
-    divider('休學');
-    card('bad','休學離校',`${S.name} 辦理了休學手續，高中生活在這裡先畫下句點。有些路後來會用別的方式走完，這一次，先在這裡停下。`);
-    renderRestartCard();
-    return;
-  }
-  if(S.sickWithdraw){
-    divider('休養');
-    card('bad','暫時告一段落',`${S.name} 決定先放下課業，好好把身體養好。這段高中故事，先在這裡按下暫停鍵。`);
-    renderRestartCard();
-    return;
-  }
-  if(S.financialWithdraw){
-    divider('休學');
-    card('bad','先照顧好家裡',`${S.name} 決定休學，先把時間留給需要幫忙的家裡。這段故事，暫時在這裡告一段落。`);
-    renderRestartCard();
-    return;
-  }
-  if(S.talentTaken){
-    divider('提前出道');
-    card('gold','踏上不一樣的路',`${S.name} 決定提前結束學業生涯，追逐更大的舞台。這條路和多數同學不同，卻是屬於自己的選擇。`);
-    renderRestartCard();
-    return;
-  }
   const avgStudy=S.scores.reduce((a,b)=>a+b,0)/S.scores.length;
   const rawFinal=clamp(Math.round(avgStudy*0.3+S.study*0.5+N0(8)),0,100);
   if(rawFinal-avgStudy>=15) traitCard('darkhorse','考運黑馬','平常表現普普，會考／統測當天卻超常發揮。');
@@ -1590,14 +1584,31 @@ function endGame(){
   if(S.lowStudyCheckpoints>=6) traitCard('tightrope','如履薄冰','我的高中生涯如履薄冰，你說我能順利畢業嗎？');
   if(S.inRelationship && S.enteringHigh3BreakupDone) traitCard('lovestrong','情比金堅','一路從高三上撐到畢業，不管課業、社團、打工再怎麼忙，這段感情始終沒有被時間磨掉。');
   checkTraits();
-  divider(S.dazedTaken?'渾渾噩噩':'畢業');
-  const endingAnchor=$('log').lastElementChild; /* 記住結局開頭位置，最後要捲回這裡而不是停在圖片 */
-  if(S.dazedTaken){
-    card('bad','人生跑馬燈','後來的日子，你已經記不清是怎麼過的了——依稀記得段考、寒暑假一次次過去，但具體發生了什麼，卻怎麼想都想不起來。畫面像跑馬燈一樣一閃而過，回過神來，已經直接來到了這裡。');
+
+  /* 不管是哪一種提前結束的逃脫機制，都照樣跑完整個畢業結局流程，只是開場的情境卡不一樣 */
+  let endingLabel='畢業', introTone='gold', introTitle='畢業典禮', introDesc;
+  if(S.expelled){
+    endingLabel='休學'; introTone='bad'; introTitle='休學離校';
+    introDesc=`${S.name} 辦理了休學手續，高中生活在這裡先畫下句點。有些路後來會用別的方式走完，這一次，先在這裡停下。`;
+  } else if(S.sickWithdraw){
+    endingLabel='休養'; introTone='bad'; introTitle='暫時告一段落';
+    introDesc=`${S.name} 決定先放下課業，好好把身體養好。這段高中故事，先在這裡按下暫停鍵。`;
+  } else if(S.financialWithdraw){
+    endingLabel='休學'; introTone='bad'; introTitle='先照顧好家裡';
+    introDesc=`${S.name} 決定休學，先把時間留給需要幫忙的家裡。這段故事，暫時在這裡告一段落。`;
+  } else if(S.talentTaken){
+    endingLabel='提前出道'; introTone='gold'; introTitle='踏上不一樣的路';
+    introDesc=`${S.name} 決定提前結束學業生涯，追逐更大的舞台。這條路和多數同學不同，卻是屬於自己的選擇。`;
+  } else if(S.dazedTaken){
+    endingLabel='渾渾噩噩'; introTone='bad'; introTitle='人生跑馬燈';
+    introDesc='後來的日子，你已經記不清是怎麼過的了——依稀記得段考、寒暑假一次次過去，但具體發生了什麼，卻怎麼想都想不起來。畫面像跑馬燈一樣一閃而過，回過神來，已經直接來到了這裡。';
   } else {
     const relLine = S.inRelationship ? `身邊的他也擠在人群裡，找到你的那一刻，笑著朝你揮了揮手。` : '';
-    card('gold','畢業典禮',`禮堂裡擠滿了穿著制服的畢業生，司儀正一班一班唱名，掌聲跟歡呼聲此起彼落。輪到你上台的那一刻，台下傳來${S.friend1Name}跟${S.friend2Name}特別大聲的歡呼，你們笑成一團，忙著互相拍照，捨不得這身制服太快脫下。${relLine}陽光從禮堂的窗戶灑進來，三年來的酸甜苦辣，忽然都湧上心頭。`);
+    introDesc=`禮堂裡擠滿了穿著制服的畢業生，司儀正一班一班唱名，掌聲跟歡呼聲此起彼落。輪到你上台的那一刻，台下傳來${S.friend1Name}跟${S.friend2Name}特別大聲的歡呼，你們笑成一團，忙著互相拍照，捨不得這身制服太快脫下。${relLine}陽光從禮堂的窗戶灑進來，三年來的酸甜苦辣，忽然都湧上心頭。`;
   }
+  divider(endingLabel);
+  const endingAnchor=$('log').lastElementChild; /* 記住結局開頭位置，最後要捲回這裡而不是停在圖片 */
+  card(introTone,introTitle,introDesc);
 
   let label,scaled,full,tier;
   if(S.starTaken){

@@ -63,6 +63,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 .card p{font-size:14px} .card p+p{margin-top:4px}
 .up{color:var(--mint);font-weight:700}.dn{color:var(--coral);font-weight:700}.hl{color:#e6960a;font-weight:700}
 .divider{text-align:center;color:var(--dim);font-size:11px;letter-spacing:.35em;padding:6px 0 0}
+.choicetag{background:#fff;border:1px dashed var(--edge);border-radius:8px;padding:5px 10px;margin:5px 0 -3px;
+  font-size:12px;color:var(--dim);font-weight:600}
+.choicetag .ctag-arrow{color:#2f9bf0;font-weight:900;margin-right:2px}
 .divider::before,.divider::after{content:'───'}
 /* ---------- 操作區 ---------- */
 #act{position:sticky;bottom:0;z-index:20;background:linear-gradient(#eaf4ffee,#eaf4ff);border-top:2px solid var(--edge);
@@ -333,9 +336,14 @@ function act(html){
     body.style.display = collapsed ? '' : 'none';
     handle.textContent = collapsed ? '▾ 收合' : '▸ 展開繼續選擇';
   };
-  scrollBottom();
 }
 /* 選擇卡：options=[{t,s,f,main,warn}] */
+function choiceTag(text){
+  const el=document.createElement('div');
+  el.className='choicetag';
+  el.innerHTML=`<span class="ctag-arrow">▸</span> 選擇了：${text}`;
+  $('log').appendChild(el);
+}
 function choose(title,options){
   let html=`<div class="title">${title}</div>`;
   options.forEach((o,i)=>{
@@ -343,7 +351,7 @@ function choose(title,options){
   });
   act(html);
   Array.from($('act').querySelectorAll('button')).forEach((b,i)=>{
-    b.onclick=()=>{ $('act').style.display='none'; options[i].f(); };
+    b.onclick=()=>{ $('act').style.display='none'; choiceTag(options[i].t); options[i].f(); };
   });
 }
 
@@ -1179,9 +1187,14 @@ function weekAllocPanel(type,weeks,cont){
 function breakEvent(type,cont){
   const weeks= type==='winter'?4:8;
   divider(type==='winter'?'寒假':'暑假');
-  card('break',type==='winter'?'寒假開始（4週）':'暑假開始（8週）',
-    type==='winter'?'段考結束，接下來是四週的寒假，要怎麼安排？':'學期結束，漫長的八週暑假開始了，要怎麼安排？');
-  weekAllocPanel(type,weeks,cont);
+  card('break','學期結束了',`豐富的${type==='winter'?'寒假':'暑假'}生活即將到來，你準備好了嗎？`);
+  choose(type==='winter'?'寒假即將開始':'暑假即將開始',[
+    {t:'安排假期時光',main:true,f:()=>{
+      card('break',type==='winter'?'寒假開始（4週）':'暑假開始（8週）',
+        type==='winter'?'段考結束，接下來是四週的寒假，要怎麼安排？':'學期結束，漫長的八週暑假開始了，要怎麼安排？');
+      weekAllocPanel(type,weeks,cont);
+    }}
+  ]);
 }
 function summerBurnoutEvent(cont){
   card('bad','爸媽發火了','客廳的燈開得特別亮，桌上攤著這學期的成績單，爸媽的臉色比燈光還冷。「你花在社團跟打工的時間，比讀書還多吧？」媽媽的聲音壓得很低，卻比大吼還讓人喘不過氣。你知道，這場對話躲不掉了。');

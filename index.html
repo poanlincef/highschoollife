@@ -925,15 +925,19 @@ function allocPanel(pool,dice,cont){
   const val={study:0,club:forcedClubMin,friend:0,date:0,job:forcedJobMin,church:0,rest:0};
   function used(){ return val.study+val.club+val.friend+val.date+val.job+val.church+val.rest; }
   function poolLineText(remain){
-    return remain>0?`還剩 ${remain} 點沒分配，全部用完才能繼續（不知道怎麼分？剩的可以都丟給「體力」，或用下面的快速分配）`:`共 ${pool} 點，已全部分配完畢`;
+    return remain>0?`還剩 ${remain} 點沒分配，全部用完才能繼續（不知道怎麼分？可以用下面的快速分配）`:`共 ${pool} 點，已全部分配完畢`;
   }
   function floorOf(k){ return k==='club'?forcedClubMin:k==='job'?forcedJobMin:0; }
   function applyPreset(preset){
-    openCats.forEach(c=>{ val[c.k]=floorOf(c.k); });
-    let remaining=pool-openCats.reduce((a,c)=>a+val[c.k],0);
-    if(preset==='study'){ val.study+=remaining; }
-    else if(preset==='rest'){ val.rest+=remaining; }
-    else if(preset==='even'){
+    const remaining=pool-used();
+    if(remaining<=0){ render(); return; }
+    if(preset==='random'){
+      let rem=remaining;
+      while(rem>0){
+        const c=openCats[ri(0,openCats.length-1)];
+        val[c.k]++; rem--;
+      }
+    } else if(preset==='even'){
       const n=openCats.length, base=Math.floor(remaining/n);
       let extra=remaining-base*n;
       openCats.forEach((c,i)=>{ val[c.k]+=base+(i<extra?1:0); });
@@ -952,8 +956,7 @@ function allocPanel(pool,dice,cont){
     html+=`<div class="presetRow">
       <span class="presetLabel">快速分配：</span>
       <button class="presetBtn" data-preset="even">平均分配</button>
-      <button class="presetBtn" data-preset="study">全部讀書</button>
-      <button class="presetBtn" data-preset="rest">全部體力</button>
+      <button class="presetBtn" data-preset="random">剩餘隨機分配</button>
     </div>`;
     html+=`<div class="wk-grid">`;
     cats.filter(c=>!c.lock).forEach(c=>{
@@ -986,16 +989,16 @@ function allocPanel(pool,dice,cont){
 /* ===== 寒暑假 ===== */
 const BREAK_AFTER={2:'winter',4:'summer',6:'winter',8:'summer',10:'winter'};
 const BREAK_CATS={
-  camp:{n:'大學科系營隊',sub:'課業+2/週・人際+1/週・金錢-250/週',eff:{study:2,social:1,money:-250}},
-  clubtrip:{n:'社團社遊/集訓',sub:'人際+2/週・精力-2/週',eff:{social:2,energy:-2},lockKey:'hasClub'},
-  discipleship:{n:'高中門徒營',sub:'靈命+2/週・精力-1/週',eff:{faith:2,energy:-1}},
-  jobweek:{n:'打工',sub:'金錢+220/週・精力-2/週',eff:{money:220,energy:-2}},
-  lazy:{n:'在家滑手機睡到飽',sub:'精力+5/週・課業-1/週・人際-1/週',eff:{energy:5,study:-1,social:-1}},
-  hangout:{n:'跟朋友出去玩',sub:'人際+2/週・金錢-150/週',eff:{social:2,money:-150}},
-  cram:{n:'補習',sub:'課業+2.5/週・精力-1/週（家裡出錢）',eff:{study:2.5,energy:-1},familyGate:4},
-  kidscamp:{n:'教會兒童營（服事）',sub:'靈命+2/週・人際+1/週・精力-2/週',eff:{faith:2,social:1,energy:-2}},
-  familytrip:{n:'家中出遊',sub:'人際+1.5/週・精力+2/週・家庭+0.3/週（家裡出錢）',eff:{social:1.5,energy:2},familyBonus:0.3},
-  rest:{n:'放鬆休息',sub:'精力+3/週',eff:{energy:3}}
+  camp:{n:'大學科系營隊',sub:`課業 <b class="up">↑</b>・人際 <b class="up">↑</b>・金錢 <b class="dn">↓</b>`,eff:{study:2,social:1,money:-250}},
+  clubtrip:{n:'社團社遊/集訓',sub:`人際 <b class="up">↑</b>・精力 <b class="dn">↓</b>`,eff:{social:2,energy:-2},lockKey:'hasClub'},
+  discipleship:{n:'高中門徒營',sub:`靈命 <b class="up">↑</b>・精力 <b class="dn">↓</b>`,eff:{faith:2,energy:-1}},
+  jobweek:{n:'打工',sub:`金錢 <b class="up">↑</b>・精力 <b class="dn">↓</b>`,eff:{money:220,energy:-2}},
+  lazy:{n:'在家滑手機睡到飽',sub:`精力 <b class="up">↑</b>・課業 <b class="dn">↓</b>・人際 <b class="dn">↓</b>`,eff:{energy:5,study:-1,social:-1}},
+  hangout:{n:'跟朋友出去玩',sub:`人際 <b class="up">↑</b>・金錢 <b class="dn">↓</b>`,eff:{social:2,money:-150}},
+  cram:{n:'補習',sub:`課業 <b class="up">↑</b>・精力 <b class="dn">↓</b>（家裡出錢）`,eff:{study:2.5,energy:-1},familyGate:4},
+  kidscamp:{n:'教會兒童營（服事）',sub:`靈命 <b class="up">↑</b>・人際 <b class="up">↑</b>・精力 <b class="dn">↓</b>`,eff:{faith:2,social:1,energy:-2}},
+  familytrip:{n:'家中出遊',sub:`人際 <b class="up">↑</b>・精力 <b class="up">↑</b>・家庭 <b class="up">↑</b>（家裡出錢）`,eff:{social:1.5,energy:2},familyBonus:0.3},
+  rest:{n:'放鬆休息',sub:`精力 <b class="up">↑</b>`,eff:{energy:3}}
 };
 const WINTER_KEYS=['camp','clubtrip','discipleship','jobweek','lazy','hangout','cram','rest'];
 const SUMMER_KEYS=['camp','clubtrip','discipleship','jobweek','lazy','hangout','cram','kidscamp','familytrip','rest'];

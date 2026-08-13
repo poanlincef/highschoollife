@@ -270,6 +270,9 @@ function newState(name,track,per){
     talentOffered:false, talentTaken:false,
     /* 重病休養 */
     severeSickCount:0, sickWithdrawOffered:false, sickWithdraw:false,
+    /* 渾渾噩噩：高一連續用快速分配、從不手動調整 */
+    /* 渾渾噩噩：高二上結束（跑完6次時間分配）仍沒有任何隱藏成就 */
+    dazedOffered:false, dazedTaken:false,
     /* 家計壓力休學 */
     financialDistressStreak:0, financialWithdraw:false,
     /* 高三上寒假結束 提早結局 */
@@ -354,7 +357,7 @@ const TRAIT_ICON={bookworm:'📚',popular:'❄️',faithful:'✝️',brokewallet
   burntout:'🕯️',teammate:'🤝',freeloader:'💣',danceleader:'💃',inlove:'🐶',
   internstar:'🔧',licensepro:'📜',darkhorse:'🐎',perfectattend:'🏅',loner:'🌫️',cheap:'🪙',single:'👑',richking:'💰',daiyu:'🥀',
   lifechange:'🕊️',tightrope:'⚖️',president:'🎖️',jobmanager:'👔',groupleader:'🎶',timemaster:'⏰',
-  loveliar:'🎣',lovestrong:'💎'};
+  loveliar:'🎣',lovestrong:'💎',lifemontage:'📼'};
 function traitCard(key,name,desc){
   if(S.traits[key])return;
   const icon=TRAIT_ICON[key]||'⭐';
@@ -546,6 +549,24 @@ function sickWithdrawEvent(){
           board(); }}
     ]};
 }
+function noAchievementCheck(next){
+  if(Object.keys(S.traits).length===0 && !S.dazedOffered){
+    S.dazedOffered=true;
+    card('info','恍惚的高一高二','不知道從什麼時候開始，高中生活好像變成了一連串重複的日子——上課、段考、放學，好像什麼都做了，卻又好像什麼都沒有特別留下痕跡。高一到高二上，一年半的時間，好像就這樣一片模糊地過去了。');
+    choose('要繼續走下去，還是就這樣結束呢？',[
+      {t:'算了，就這樣快轉到結局吧',s:'遊戲直接快轉結束，會用目前的狀態生成結局',warn:true,f:()=>{
+          S.dazedTaken=true;
+          card('bad','渾渾噩噩','你合上了課本，看著窗外發呆了很久。高中生活好像就這樣過去了，沒什麼特別深刻的記憶，但好像也沒什麼好後悔的——這就是你選擇的步調。');
+          traitCard('lifemontage','人生跑馬燈','高一到高二上，日子過得像按下快轉鍵一樣模糊，回過神來，已經來到了故事的終點。');
+          board();
+          setTimeout(()=>endGame(),300); }},
+      {t:'打起精神，好好過剩下的高中生活',main:true,f:()=>{
+          card('good','打起精神','你甩了甩頭，重新坐直身子。「不能再這樣下去了」——你在心裡告訴自己，開始認真思考接下來每一次的選擇。');
+          board();
+          next(); }}
+    ]);
+  } else { next(); }
+}
 function friendFightEvent(){
   const n=S.friend1Name;
   return {id:'fight',title:'跟好朋友吵架了',
@@ -600,12 +621,12 @@ function breakupCrisisEvent(){
     desc:'放學後，他約你在校門口的老地方見面。夕陽把兩人的影子拉得很長，他低著頭，手指不停絞著書包背帶，好一會兒才抬起頭：「最近你的時間，好像都被讀書、社團、打工分光了……我們，還要不要繼續走下去？」',
     choices:[
       {t:'提分手，先衝刺考試',s:'課業 +，人際 -多',warn:true,f:()=>{
-          S.inRelationship=false; S.crushCooldown=3; applyEff({study:5,social:-6});
+          S.inRelationship=false; S.crushCooldown=3; S.coupleFightCount=0; applyEff({study:5,social:-6});
           card('bad','分手','你們在校門口站了很久，最後誰也沒有再多說什麼，只是點了點頭。走回家的路上，手機裡那些聊天記錄突然變得很安靜。課業 <b class="up">+5</b>，人際 <b class="dn">-6</b>。');
           traitCard('single','單身貴族','放下了這段感情，一個人也能把日子過得很好。');
           board(); }},
       {t:'撐下去，繼續交往',s:'結果難料',main:true,f:()=>{
-          S.loveScore=clamp(S.loveScore+3,0,10);
+          S.loveScore=clamp(S.loveScore+3,0,10); S.coupleFightCount=0;
           if(chance(60)){ applyEff({social:4}); card('good','撐過去了','兩人在原地聊了很久，把心裡的委屈跟不安都攤開來說。最後約定好，以後不管多忙，都要留一點時間給彼此。人際 <b class="up">+4</b>。'); }
           else { applyEff({study:-5,social:-2}); card('bad','貌合神離','嘴上說著沒事，但接下來幾天上課總是恍神，腦子裡反覆想著剛剛的對話。雖然沒分手，但那份不安一直懸在心裡。課業 <b class="dn">-5</b>，人際 <b class="dn">-2</b>。'); }
           board(); }}
@@ -626,7 +647,7 @@ function confessedToEvent(){
     desc:'放學後，一位平常沒什麼交集的同學攔住了你，臉紅紅地遞出一張紙條，說鼓起了好大的勇氣，想問你要不要跟他交往看看。',
     choices:[
       {t:'答應交往',s:'人際 +多，直接進入交往關係',main:true,f:()=>{
-          S.inRelationship=true; S.loveScore=7; applyEff({social:6});
+          S.inRelationship=true; S.loveScore=7; S.coupleFightCount=0; applyEff({social:6});
           card('gold','戀愛開始',`看著對方緊張又期待的眼神，你點了點頭。以後時間分配裡會多一個「約會」選項，記得留時間陪他，不然感情會慢慢變淡。人際 <b class="up">+6</b>。`);
           board(); }},
       {t:'婉拒',f:()=>{ applyEff({social:1}); card('info','婉拒','你溫柔地拒絕了，對方雖然失落，但還是笑著說沒關係，往後見面也還是會點頭打招呼。'); board(); }}
@@ -637,7 +658,7 @@ function datingBeginsEvent(){
     desc:'這陣子跟他相處得越來越自然，一起走的路變長了，聊天的話題也越來越沒有邊界。這天放學，兩人並肩走在夕陽下的人行道上，他忽然停下腳步，深吸一口氣，紅著臉問你：「我們，要不要正式在一起？」',
     choices:[
       {t:'答應交往',s:'人際 +多、之後要記得排約會時間',main:true,
-        f:()=>{ S.inRelationship=true; S.crushActive=false; applyEff({social:8});
+        f:()=>{ S.inRelationship=true; S.crushActive=false; S.coupleFightCount=0; applyEff({social:8});
           card('gold','戀愛開始',`你點了點頭，兩人相視而笑，路燈這時剛好亮起。以後時間分配裡會多一個「約會」選項，記得留時間陪他，不然感情會慢慢變淡。人際 <b class="up">+8</b>。`);
           board(); }},
       {t:'婉拒，維持朋友就好',f:()=>{ S.crushActive=false; S.crushDeclinedAfterPursue=true; S.loveScore=clamp(S.loveScore-3,0,10); applyEff({social:2}); card('info','婉拒','你輕輕搖了搖頭，「還是先當朋友就好」。對方愣了一下，勉強笑了笑說沒關係，但那之後的沉默，比平常都要漫長。'); board(); }}
@@ -781,11 +802,20 @@ function checkCrushTrigger(){
   return S.social>threshold;
 }
 /* 感情：交往後感情數值過低會吵架，見底就強制觸發分手抉擇 */
+/* 感情危機：感情值低落，或段考成績退步（現實中壓力真的會波及感情），都可能觸發吵架；
+   累計吵架滿2次後，下一次觸發改成分手抉擇；選擇撐下去則歸零重新累積 */
 function checkLoveCrisis(){
   if(!S.inRelationship) return null;
-  if(S.loveScore<=0) return 'breakup';
-  if(S.loveScore<4 && chance(50)) return 'fight';
-  return null;
+  if(S.loveScore<=0) return 'breakup'; /* 感情值見底，直接進入分手抉擇，不看吵架次數 */
+  const scoreDropped = S.scores.length>=2 && S.scores[S.scores.length-1] < S.scores[S.scores.length-2];
+  const lowLove = S.loveScore<4;
+  let triggered=false;
+  if(lowLove && chance(50)) triggered=true;
+  else if(scoreDropped && chance(40)) triggered=true;
+  if(!triggered) return null;
+  if(S.coupleFightCount>=2) return 'breakup';
+  S.coupleFightCount++;
+  return 'fight';
 }
 
 const REPEATABLE_EVENT_IDS=['family','tutor','report']; /* 家人相關/課業過低必要事件、分組報告可以重複觸發（分組報告本來就會重複發生），其餘盡量整場只出現一次 */
@@ -896,9 +926,10 @@ function decayStats(){
   S.energy=clamp(S.energy+4,0,100); /* 每回合小幅回復，但不夠應付花費，仍需靠「體力」休息 */
   /* 人際子數值：緩慢漂移、過低會拖累整體人際 */
   S.familyScore=clamp(S.familyScore-0.15,0,10);
-  if(S.hasClub) S.clubScore=clamp(S.clubScore-0.2,0,10);
+  if(S.hasClub) S.clubScore=clamp(S.clubScore-0.4,0,10); /* 半學期沒理社團要看得出明顯下滑 */
   if(S.hasJob) S.jobScore=clamp(S.jobScore-0.2,0,10);
   S.serviceScore=clamp(S.serviceScore-0.15,0,10);
+  if(S.inRelationship) S.loveScore=clamp(S.loveScore-0.4,0,10); /* 感情需要持續維繫，不理它會慢慢變淡 */
   if(S.hasClub && S.clubScore<5) S.social=Math.max(0,S.social-0.3);
   if(S.familyScore<5) S.social=Math.max(0,S.social-0.3);
   if(S.inRelationship && S.loveScore<5) S.social=Math.max(0,S.social-0.3);
@@ -1109,12 +1140,12 @@ function applyAllocationEffects(val){
   S.serviceScore=clamp(S.serviceScore+val.church*0.6,0,10);
   if(S.inRelationship){
     if(val.date>0){ S.loveScore=clamp(S.loveScore+val.date*1.2,0,10); applyEff({social:val.date*0.5}); }
-    else { S.loveScore=clamp(S.loveScore-2,0,10); }
+    else { S.loveScore=clamp(S.loveScore-3,0,10); }
   } else if(S.crushActive && val.date>0){
     S.loveScore=clamp(S.loveScore+val.date*1.2,0,10); /* 曖昧期主動相處，加速升溫 */
   }
-  /* 精力消耗 */
-  const spentEnergy=val.study*3+val.club*2.5+val.friend*1.5+(val.date||0)*1.5+val.job*3+val.church*1;
+  /* 精力消耗（調整為原本的70%，避免就算分配到體力也還是很容易見底） */
+  const spentEnergy=(val.study*3+val.club*2.5+val.friend*1.5+(val.date||0)*1.5+val.job*3+val.church*1)*0.7;
   applyEff({energy:-spentEnergy});
   S.sprintActive=false; /* 衝刺加成只作用這一次分配，用完即清 */
   if(S.energy<=8)S.lowEnergyCount++;
@@ -1305,7 +1336,7 @@ function semesterEndHooks(semIdx,cont){
   steps.push((next)=>financialCrisisCheck(next));
   if(semIdx===1){ steps.push((next)=>officerOfferStep(next)); steps.push((next)=>jobPromoteStep(next)); }
   if(semIdx===2) steps.push((next)=>presidentOrSwitchStep(next));
-  if(semIdx===3){ steps.push((next)=>jobManagerStep(next)); steps.push((next)=>serviceRole1Step(next)); }
+  if(semIdx===3){ steps.push((next)=>jobManagerStep(next)); steps.push((next)=>serviceRole1Step(next)); steps.push((next)=>noAchievementCheck(next)); }
   if(semIdx===4){ steps.push((next)=>serviceRole2Step(next)); steps.push((next)=>talentScoutStep(next)); }
   runSteps(steps,cont);
 }
@@ -1551,9 +1582,11 @@ function endGame(){
   if(S.lowStudyCheckpoints>=6) traitCard('tightrope','如履薄冰','我的高中生涯如履薄冰，你說我能順利畢業嗎？');
   if(S.inRelationship && S.enteringHigh3BreakupDone) traitCard('lovestrong','情比金堅','一路從高三上撐到畢業，不管課業、社團、打工再怎麼忙，這段感情始終沒有被時間磨掉。');
   checkTraits();
-  divider('畢業');
+  divider(S.dazedTaken?'渾渾噩噩':'畢業');
   const endingAnchor=$('log').lastElementChild; /* 記住結局開頭位置，最後要捲回這裡而不是停在圖片 */
-  {
+  if(S.dazedTaken){
+    card('bad','人生跑馬燈','後來的日子，你已經記不清是怎麼過的了——依稀記得段考、寒暑假一次次過去，但具體發生了什麼，卻怎麼想都想不起來。畫面像跑馬燈一樣一閃而過，回過神來，已經直接來到了這裡。');
+  } else {
     const relLine = S.inRelationship ? `身邊的他也擠在人群裡，找到你的那一刻，笑著朝你揮了揮手。` : '';
     card('gold','畢業典禮',`禮堂裡擠滿了穿著制服的畢業生，司儀正一班一班唱名，掌聲跟歡呼聲此起彼落。輪到你上台的那一刻，台下傳來${S.friend1Name}跟${S.friend2Name}特別大聲的歡呼，你們笑成一團，忙著互相拍照，捨不得這身制服太快脫下。${relLine}陽光從禮堂的窗戶灑進來，三年來的酸甜苦辣，忽然都湧上心頭。`);
   }

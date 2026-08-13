@@ -1735,27 +1735,41 @@ function startSemester(semIdx){
     });
   });
 }
-const PERSONA_TEMPLATES={
-  Risk:{pos:'面對不確定的選擇，你總是傾向賭一把，相信「拚了才知道」。',
-    neg:'面對不確定的選擇，你更習慣穩紮穩打，不輕易冒險。',
-    neu:'面對不確定的選擇，你會依情況拿捏，沒有固定的偏好。'},
-  Conflict:{pos:'遇到摩擦時，你會主動把話說開，不讓誤會拖太久。',
-    neg:'遇到摩擦時，你更習慣先讓時間沉澱，不急著開口。',
-    neu:'遇到摩擦時，你的反應時好時壞，沒有固定的模式。'},
-  Duty:{pos:'每次被賦予更大的責任，你幾乎都選擇迎向前。',
-    neg:'面對額外的責任邀約，你更習慣守住自己的節奏，留一點餘裕給自己。',
-    neu:'面對額外的責任，你會視情況決定要不要接下，沒有固定傾向。'},
-  Altruism:{pos:'在群體裡，你常常是先注意到別人需要的那個人。',
-    neg:'在群體裡，你更傾向先確保自己過得去，再考慮別人。',
-    neu:'在群體裡，你在利他跟利己之間拿捏得還算平衡。'}
+const PERSONA_PHRASES={
+  Risk:{pos:'面對不確定的選擇，你總是傾向賭一把，相信「拚了才知道」',
+    neg:'面對不確定的選擇，你更習慣穩紮穩打，不輕易冒險'},
+  Conflict:{pos:'遇到摩擦時，你會主動把話說開，不讓誤會拖太久',
+    neg:'遇到摩擦時，你更習慣先讓時間沉澱，不急著開口'},
+  Duty:{pos:'每次被賦予更大的責任，你幾乎都選擇迎向前',
+    neg:'面對額外的責任邀約，你更習慣守住自己的節奏，留一點餘裕給自己'},
+  Altruism:{pos:'在群體裡，你常常是先注意到別人需要的那個人',
+    neg:'在群體裡，你更傾向先確保自己過得去，再考慮別人'}
 };
+const PERSONA_CONNECTORS=['','另外，','而且，','比較特別的是，'];
 const PERSONA_DIMS=['Risk','Conflict','Duty','Altruism'];
 const PERSONA_DIM_NAME={Risk:'冒險',Conflict:'修復衝突',Duty:'承擔責任',Altruism:'利他'};
 function personaDirection(v){ if(v>=2) return 'pos'; if(v<=-2) return 'neg'; return 'neu'; }
 function buildPersonaProfileText(){
   const current={};
   PERSONA_DIMS.forEach(d=>{ current[d]=S['trait'+d]||0; });
-  const lines=PERSONA_DIMS.map(d=>PERSONA_TEMPLATES[d][personaDirection(current[d])]);
+  const dirs={};
+  PERSONA_DIMS.forEach(d=>{ dirs[d]=personaDirection(current[d]); });
+  const clearDims=PERSONA_DIMS.filter(d=>dirs[d]!=='neu');
+
+  let body;
+  if(clearDims.length===0){
+    body='這一年，你還沒有特別鮮明的稜角——面對抉擇時大多依照當下情況拿捏，沒有固定的套路，是那種需要多相處一陣子才摸得透的人。';
+  } else {
+    const sentences=clearDims.map((d,i)=>{
+      const conn=PERSONA_CONNECTORS[i%PERSONA_CONNECTORS.length];
+      return conn+PERSONA_PHRASES[d][dirs[d]]+'。';
+    });
+    body=sentences.join('');
+    if(clearDims.length<PERSONA_DIMS.length){
+      body+='其他時候，你則會依情況調整，沒有太固定的模式。';
+    }
+  }
+
   let compareLine='';
   const prev=S.profileSnapshots.length?S.profileSnapshots[S.profileSnapshots.length-1]:null;
   if(prev){
@@ -1769,7 +1783,7 @@ function buildPersonaProfileText(){
     if(shifts.length) compareLine='跟上次比起來，'+shifts.join('，')+'。';
   }
   S.profileSnapshots.push(current);
-  return lines.join('')+(compareLine?('<br><br>'+compareLine):'');
+  return body+(compareLine?('<br><br>'+compareLine):'');
 }
 function generatePersonaProfile(stage){
   const title=stage==='high1'?'高一側寫':stage==='high2'?'高二側寫':'三年側寫';

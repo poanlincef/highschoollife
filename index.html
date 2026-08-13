@@ -87,6 +87,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 .btn small{display:block;font-weight:400;font-size:12px;color:var(--dim);margin-top:2px}
 .btn.main{background:linear-gradient(135deg,#ffd257,var(--amber));border-color:#f0a400;text-align:center;color:#2b2000}
 .btn.choice{text-align:center;background:var(--panel)}
+.rewindRow{display:flex;gap:8px;margin-bottom:8px}
+.rewindRow .btn{flex:1;padding:9px 8px;font-size:13px}
 .btn.warn{border-color:#ffb7af;background:#fff4f3}
 /* 分配面板 */
 .alloc-row{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--edge);
@@ -159,12 +161,14 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 #help-overlay.open{display:flex}
 #help-card{background:#fff;border-radius:16px;padding:22px 20px;max-width:400px;width:100%;box-shadow:0 12px 40px #0004}
 #help-card h3{font-family:var(--disp);font-size:19px;color:var(--ink);margin-bottom:14px}
-#help-card h4{font-size:13px;color:var(--dim);font-weight:700;margin:4px 0 10px;padding-top:14px;border-top:1px dashed var(--edge)}
 #help-card ul{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
 #help-card li{font-size:14px;line-height:1.7;color:var(--ink);padding-left:18px;position:relative}
 #help-card li::before{content:'';position:absolute;left:0;top:7px;width:7px;height:7px;background:var(--amber);
   border-radius:2px;transform:rotate(45deg)}
 #help-card .btn.main{margin-top:0}
+.help-dots{display:flex;justify-content:center;gap:7px;margin-bottom:14px}
+.help-dots span{width:7px;height:7px;border-radius:50%;background:var(--edge);display:block}
+.help-dots span.on{background:var(--amber);width:18px;border-radius:4px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -212,21 +216,28 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 <button id="help-btn" title="遊戲說明">？</button>
 <div id="help-overlay">
   <div id="help-card">
-    <h3>高中人生小提醒</h3>
-    <ul>
-      <li>🎯 六種不同的高中生涯目標，最後真的能達成自己當初訂下的夢想嗎？還是會拿到「說說而已」？</li>
-      <li>🔍 三年下來，遊戲會悄悄記錄你每一次抉擇的傾向，在高一、高二、畢業時分別揭曉一份專屬於你的性格側寫。</li>
-      <li>🏆 全遊戲藏了 31 個隱藏成就，從「讀書狂」到「人生跑馬燈」都有——你的高中人生能解鎖幾個？</li>
-      <li>🎭 除了正常畢業、繁星推薦，還藏著好幾種意想不到的結局，你的選擇會帶你走到哪裡？</li>
-    </ul>
-    <h4>💡 貼心提醒</h4>
-    <ul>
-      <li>🔋 每件事情其實都會付出相應的代價，別以為你年輕體力好。</li>
-      <li>📉 學如逆水行舟，不進則退——課業、人際、靈命都要持續投入，停下來就會慢慢退步。</li>
-      <li>⏳ 時間點數要分配完才能繼續下一步；不知道怎麼分，上面有「平均分配」「隨機分配」可以一鍵搞定。</li>
-      <li>👆 底下的操作面板可以點頂端的橫條收合，讓你先看清楚上面發生了什麼事再做決定。</li>
-    </ul>
-    <button class="btn main" id="help-close">知道了，開始我的高中人生</button>
+    <div id="help-page-1">
+      <h3>高中人生小提醒</h3>
+      <ul>
+        <li>🎯 六種不同的高中生涯目標，最後真的能達成自己當初訂下的夢想嗎？還是會拿到「說說而已」？</li>
+        <li>🔍 三年下來，遊戲會悄悄記錄你每一次抉擇的傾向，在高一、高二、畢業時分別揭曉一份專屬於你的性格側寫。</li>
+        <li>🏆 全遊戲藏了 31 個隱藏成就，從「讀書狂」到「人生跑馬燈」都有——你的高中人生能解鎖幾個？</li>
+        <li>🎭 除了正常畢業、繁星推薦，還藏著好幾種意想不到的結局，你的選擇會帶你走到哪裡？</li>
+      </ul>
+      <div class="help-dots"><span class="on"></span><span></span></div>
+      <button class="btn main" id="help-next">下一頁 ▸</button>
+    </div>
+    <div id="help-page-2" style="display:none">
+      <h3>💡 貼心提醒</h3>
+      <ul>
+        <li>🔋 每件事情其實都會付出相應的代價，別以為你年輕體力好。</li>
+        <li>📉 學如逆水行舟，不進則退——課業、人際、靈命都要持續投入，停下來就會慢慢退步。</li>
+        <li>⏳ 時間點數要分配完才能繼續下一步；不知道怎麼分，上面有「平均分配」「隨機分配」可以一鍵搞定。</li>
+        <li>👆 底下的操作面板可以點頂端的橫條收合，讓你先看清楚上面發生了什麼事再做決定。</li>
+      </ul>
+      <div class="help-dots"><span></span><span class="on"></span></div>
+      <button class="btn main" id="help-close">知道了，開始我的高中人生</button>
+    </div>
   </div>
 </div>
 <script>
@@ -304,6 +315,7 @@ function newState(name,track,per){
   };
 }
 let S;
+let CHECKPOINTS={}; /* 存檔點：高二開學、高三開學，讓結局畫面可以選擇「回到」重來 */
 
 /* ===== 卡片與畫面更新 ===== */
 function card(tone,title,html){
@@ -581,10 +593,12 @@ function sickWithdrawEvent(){
           board(); }}
     ]};
 }
-function autoSimulateRemainingSemesters(){
-  /* 快轉結局用：剩下的學期沒有真的玩過，粗略模擬一下讓成績總覽不會開天窗 */
+function autoSimulateRemainingSemesters(includeCurrent){
+  /* 快轉結局用：剩下的學期沒有真的玩過，粗略模擬一下讓成績總覽不會開天窗
+     includeCurrent=true 時，連「剛進入、還沒真的玩」的當前學期也一併模擬進去 */
   const startSem=curSem();
-  for(let s=startSem+1;s<=6;s++){
+  const loopStart=includeCurrent?startSem:startSem+1;
+  for(let s=loopStart;s<=6;s++){
     decayStats(); decayStats(); decayStats(); /* 粗略模擬這學期3次段考都心不在焉、沒有真的投入 */
     const semScores=[];
     for(let i=0;i<3;i++){
@@ -1312,7 +1326,7 @@ function checkTraits(){
   if(S.licenseCount>=2 && S.track==='voc') traitCard('licensepro','證照達人','手上多了不只一張技術士證照。');
   if(S.cheapCount>=3) traitCard('cheap','小氣巴拉','出去玩總是讓朋友先出錢，荷包是保住了，但朋友心裡都有數。');
   if(S.money>=5000) traitCard('richking','大富翁','荷包滿滿，畢業時存款比很多社會新鮮人還多。');
-  if(S.sickCount>=5) traitCard('daiyu','林黛玉','整天病懨懨，風吹了就倒，卻也把生病活成了一種日常美學。');
+  if(S.sickCount>=5 || S.severeSickCount>=2) traitCard('daiyu','林黛玉','整天病懨懨，風吹了就倒，卻也把生病活成了一種日常美學。');
   if(S.clubPresident) traitCard('president','社團社長','扛下了社長的責任，高二有一大段時間都獻給了這個社團。');
   if(S.jobTier>=2) traitCard('jobmanager','打工小主管','從工讀生一路做到值班主管，職場歷練比同齡人多了不少。');
   if(S.study>=70 && S.social>=70 && S.faith>=70) traitCard('timemaster','時間管理大師','課業、人際、靈命三頭都顧到了，把時間安排得恰到好處。');
@@ -1414,7 +1428,7 @@ function welcomeThenAlloc(semIdx,cont){
   } else {
     card('info','新學期開始',SEM_WELCOME[semIdx-1]);
   }
-  choose(SEMN[semIdx-1],[
+  const options=[
     {t:'迎接新學期',main:true,f:()=>{
       allocPanel(finalPool,roll,(val)=>{
         applyAllocationEffects(val); /* 這次分配先不算分，分數留到後面的事件之後才計算 */
@@ -1422,7 +1436,17 @@ function welcomeThenAlloc(semIdx,cont){
         cont();
       });
     }}
-  ]);
+  ];
+  if(semIdx===3 || semIdx===5){
+    options.push({t:'快轉我的高中生活',warn:true,f:()=>{
+      S.dazedTaken=true;
+      card('bad','渾渾噩噩','你合上了課本，看著窗外發呆了很久。高中生活好像就這樣過去了，沒什麼特別深刻的記憶，但好像也沒什麼好後悔的——這就是你選擇的步調。');
+      traitCard('lifemontage','人生跑馬燈','日子過得像按下快轉鍵一樣模糊，回過神來，已經來到了故事的終點。');
+      autoSimulateRemainingSemesters(true);
+      setTimeout(()=>endGame(),300);
+    }});
+  }
+  choose(SEMN[semIdx-1],options);
 }
 function finalSprintEvent(){
   return {id:'sprint',title:'最後衝刺',
@@ -1698,6 +1722,8 @@ function clubSwitchStep(next){
 }
 function startSemester(semIdx){
   if(semIdx>6) return;
+  if(semIdx===3) CHECKPOINTS.high2=JSON.parse(JSON.stringify(S)); /* 存一份「高二開學那一刻」的存檔，供結局畫面選擇回到這裡重來 */
+  if(semIdx===5) CHECKPOINTS.high3=JSON.parse(JSON.stringify(S)); /* 同上，高三開學那一刻 */
   semesterIntro(semIdx, ()=>{
     welcomeThenAlloc(semIdx, ()=>{                       // 期初分配（一次，先不算分）
       runSingleEvent(semIdx, ()=>{                       // 事件1（隨機事件）
@@ -2153,12 +2179,34 @@ function restartGame(){
   $('start').style.display='';
   window.scrollTo(0,0);
 }
+function rewindTo(stage){
+  const snap=CHECKPOINTS[stage];
+  if(!snap) return;
+  S=JSON.parse(JSON.stringify(snap)); /* 深拷貝存檔點，避免之後的遊玩又反過來污染到存檔本身 */
+  $('log').innerHTML='';
+  $('act').innerHTML=''; $('act').style.display='';
+  $('board').style.display='';
+  window.scrollTo(0,0);
+  board();
+  card('info','時光倒流',`回到了${stage==='high2'?'高二':'高三'}開學的那一刻，這一次，想試試不一樣的選擇。`);
+  startSemester(stage==='high2'?3:5);
+}
 function renderRestartCard(){
   const el=document.createElement('div');
   el.className='card';
-  el.innerHTML=`<button class="btn main" id="btn-restart-life">🔄 重新開始我的高中人生</button>`;
+  let html='';
+  if(CHECKPOINTS.high2 || CHECKPOINTS.high3){
+    html+=`<div class="rewindRow">`;
+    if(CHECKPOINTS.high2) html+=`<button class="btn choice" id="btn-rewind-high2">⏪ 回到高二</button>`;
+    if(CHECKPOINTS.high3) html+=`<button class="btn choice" id="btn-rewind-high3">⏪ 回到高三</button>`;
+    html+=`</div>`;
+  }
+  html+=`<button class="btn main" id="btn-restart-life">🔄 重新開始我的高中人生</button>`;
+  el.innerHTML=html;
   $('log').appendChild(el);
   el.querySelector('#btn-restart-life').onclick=restartGame;
+  const h2=el.querySelector('#btn-rewind-high2'); if(h2) h2.onclick=()=>rewindTo('high2');
+  const h3=el.querySelector('#btn-rewind-high3'); if(h3) h3.onclick=()=>rewindTo('high3');
   scrollBottom();
 }
 
@@ -2177,6 +2225,7 @@ $('btn-start').onclick=()=>{
   const nm=$('in-name').value.trim()||'陳小美';
   seedInit(SEED);
   S=newState(nm,selTrack,selPer);
+  CHECKPOINTS={}; /* 全新一輪遊戲，清空舊的存檔點 */
   if(selPer==='job'){ S.hasJob=true; S.jobName=pick(['手搖飲店','超商','早餐店']); S.usedPoolIds.push('jobOffer'); }
   $('start').style.display='none';
   $('board').style.display=''; $('act').style.display='';
@@ -2184,7 +2233,11 @@ $('btn-start').onclick=()=>{
   card('info','入學',`${TRACKN[selTrack]}生活正式開始。${S.name}，接下來的三年六個學期，怎麼過是你的選擇。`);
   startSemester(1);
 };
-$('help-btn').onclick=()=>{ $('help-overlay').classList.add('open'); };
+$('help-btn').onclick=()=>{
+  $('help-page-1').style.display=''; $('help-page-2').style.display='none'; /* 每次打開都從第一頁看起 */
+  $('help-overlay').classList.add('open');
+};
+$('help-next').onclick=()=>{ $('help-page-1').style.display='none'; $('help-page-2').style.display=''; };
 $('help-close').onclick=()=>{ $('help-overlay').classList.remove('open'); };
 $('help-overlay').onclick=(e)=>{ if(e.target.id==='help-overlay') $('help-overlay').classList.remove('open'); };
 $('help-overlay').classList.add('open'); /* 首次進入時預設打開遊戲說明，讓玩家先看到成就/結局的亮點再開始 */

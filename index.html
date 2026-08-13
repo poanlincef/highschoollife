@@ -883,11 +883,6 @@ function checkLoveCrisis(){
 
 const REPEATABLE_EVENT_IDS=['family','tutor','report']; /* 家人相關/課業過低必要事件、分組報告可以重複觸發（分組報告本來就會重複發生），其餘盡量整場只出現一次 */
 function pickPoolEvent(){
-  if(S.track==='voc'){
-    if(curSem()===3 && !S.usedPoolIds.includes('intern1')){ S.usedPoolIds.push('intern1'); return internshipEvent(); }
-    if(curSem()===5 && !S.usedPoolIds.includes('license1')){ S.usedPoolIds.push('license1'); return licenseEvent(1); }
-    if(curSem()===6 && !S.usedPoolIds.includes('license2')){ S.usedPoolIds.push('license2'); return licenseEvent(2); }
-  }
   let pool=POOL_GENERIC.map(f=>f()).filter(e=>!e.cond||e.cond());
   /* 分組報告會重複發生，加權2倍讓它比較有機會累積出神隊友/就你在雷成就 */
   const rep=reportEvent();
@@ -1289,14 +1284,6 @@ function pickEventForSlot(semIdx){
     S.sickWithdrawOffered=true;
     return sickWithdrawEvent();
   }
-  if(S.track==='gen' && semIdx===6 && S.examPath==='interview' && !S.interviewDone){
-    S.interviewDone=true;
-    return interviewResultEvent();
-  }
-  if(semIdx===5 && S.inRelationship && !S.enteringHigh3BreakupDone){
-    S.enteringHigh3BreakupDone=true;
-    return breakupCrisisEvent();
-  }
   if(S.crushActive && S.loveScore>=7){
     return datingBeginsEvent();
   }
@@ -1308,9 +1295,6 @@ function pickEventForSlot(semIdx){
   if(crisis){
     return crisis==='breakup'?breakupCrisisEvent():coupleFightEvent();
   }
-  if(semIdx===4 && !S.danceDone){ S.danceDone=true; return danceEvent(); }
-  if(semIdx===4 && S.hasClub && !S.showcaseDone){ S.showcaseDone=true; return clubShowcaseEvent(); }
-  if(semIdx===6 && !S.farewellDone){ S.farewellDone=true; return farewellEvent(); }
   const sev=maybeSick();
   if(sev){
     S.sickCount++;
@@ -1321,6 +1305,32 @@ function pickEventForSlot(semIdx){
     return sickEvent(sev);
   }
   return pickPoolEvent();
+}
+function runFixedEvents(semIdx,cont){
+  /* 學期限定的固定事件：不跟隨機事件搶事件槽，隨機事件跑完之後才依序保證觸發 */
+  const steps=[];
+  if(semIdx===3 && S.track==='voc' && !S.usedPoolIds.includes('intern1')){
+    steps.push((next)=>{ S.usedPoolIds.push('intern1'); const ev=internshipEvent(); card('info',ev.title,ev.desc); chooseForcedEventThen(ev,next); });
+  }
+  if(semIdx===4 && !S.danceDone){
+    steps.push((next)=>{ S.danceDone=true; const ev=danceEvent(); card('info',ev.title,ev.desc); chooseForcedEventThen(ev,next); });
+  }
+  if(semIdx===4 && S.hasClub && !S.showcaseDone){
+    steps.push((next)=>{ S.showcaseDone=true; const ev=clubShowcaseEvent(); card('info',ev.title,ev.desc); chooseForcedEventThen(ev,next); });
+  }
+  if(semIdx===5 && S.inRelationship && !S.enteringHigh3BreakupDone){
+    steps.push((next)=>{ S.enteringHigh3BreakupDone=true; const ev=breakupCrisisEvent(); card('info',ev.title,ev.desc); chooseForcedEventThen(ev,next); });
+  }
+  if(semIdx===5 && S.track==='voc' && !S.usedPoolIds.includes('license1')){
+    steps.push((next)=>{ S.usedPoolIds.push('license1'); const ev=licenseEvent(1); card('info',ev.title,ev.desc); chooseForcedEventThen(ev,next); });
+  }
+  if(semIdx===6 && S.track==='gen' && S.examPath==='interview' && !S.interviewDone){
+    steps.push((next)=>{ S.interviewDone=true; const ev=interviewResultEvent(); card('info',ev.title,ev.desc); chooseForcedEventThen(ev,next); });
+  }
+  if(semIdx===6 && S.track==='voc' && !S.usedPoolIds.includes('license2')){
+    steps.push((next)=>{ S.usedPoolIds.push('license2'); const ev=licenseEvent(2); card('info',ev.title,ev.desc); chooseForcedEventThen(ev,next); });
+  }
+  runSteps(steps,cont);
 }
 const SEM_WELCOME=[
   '高中第一個學期就要開始了，要好好想想接下來的高中生活可以怎麼投入……',
@@ -1613,17 +1623,26 @@ function startSemester(semIdx){
   if(semIdx>6) return;
   semesterIntro(semIdx, ()=>{
     welcomeThenAlloc(semIdx, ()=>{                       // 期初分配（一次，先不算分）
-      runSingleEvent(semIdx, ()=>{                       // 事件1
+      runSingleEvent(semIdx, ()=>{                       // 事件1（隨機事件）
         popScore('第一次段考成績', ()=>{                     // 第一次段考成績
-          runSingleEvent(semIdx, ()=>{                    // 事件2
+          runSingleEvent(semIdx, ()=>{                    // 事件2（隨機事件）
             popScore('第二次段考成績', ()=>{                   // 第二次段考成績
-              runSingleEvent(semIdx, ()=>{                  // 事件3
-                const sprintEv=finalSprintEvent();           // 最後衝刺（事件化，取代期末分配）
-                card('info',sprintEv.title,sprintEv.desc);
-                chooseForcedEventThen(sprintEv, ()=>{
-                  popScore('期末成績', ()=>{                    // 期末成績（雙跑取平均）
-                    afterSemesterCheckpoints(semIdx);
-                  }, true);
+              runSingleEvent(semIdx, ()=>{                  // 事件3（隨機事件）
+                runFixedEvents(semIdx, ()=>{                  // 隨機事件跑完後，才保證觸發這學期的固定事件
+                  const sprintEv=finalSprintEvent();           // 最後衝刺（事件化，取代期末分配）
+                  card('info',sprintEv.title,sprintEv.desc);
+                  chooseForcedEventThen(sprintEv, ()=>{
+                    popScore('期末成績', ()=>{                    // 期末成績（雙跑取平均）
+                      if(semIdx===6 && !S.farewellDone){          // 最後的日子：綁定正常結束遊戲前的最後一個事件
+                        S.farewellDone=true;
+                        const ev=farewellEvent();
+                        card('info',ev.title,ev.desc);
+                        chooseForcedEventThen(ev, ()=>afterSemesterCheckpoints(semIdx));
+                      } else {
+                        afterSemesterCheckpoints(semIdx);
+                      }
+                    }, true);
+                  });
                 });
               });
             });

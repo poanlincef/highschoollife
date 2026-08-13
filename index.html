@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 #bd-name{font-family:var(--disp);font-weight:600;font-size:17px;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
 #bd-name small{color:#ffffffb0;font-weight:400;font-size:12px;margin-left:6px;font-family:var(--sans)}
 #bd-tag{color:#ffe27a;font-size:12px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
-#examstrip{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:8px}
+#examstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:8px}
 .exbox{height:9px;border-radius:2px;background:#ffffff33;border:1px solid #ffffff40}
 .exbox.done{background:#ffe27a;border-color:#ffe27a}
 .exbox.now{background:#fff;border-color:#fff}
@@ -556,7 +556,7 @@ function autoSimulateRemainingSemesters(){
   /* 快轉結局用：剩下的學期沒有真的玩過，粗略模擬一下讓成績總覽不會開天窗 */
   const startSem=curSem();
   for(let s=startSem+1;s<=6;s++){
-    decayStats(); /* 粗略模擬這學期的分配都心不在焉、沒有真的投入 */
+    decayStats(); decayStats(); decayStats(); /* 粗略模擬這學期3次段考都心不在焉、沒有真的投入 */
     const semScores=[];
     for(let i=0;i<3;i++){
       const fatigue=S.energy<25?(25-S.energy)*0.5:0;
@@ -642,7 +642,7 @@ function breakupCrisisEvent(){
     desc:'放學後，他約你在校門口的老地方見面。夕陽把兩人的影子拉得很長，他低著頭，手指不停絞著書包背帶，好一會兒才抬起頭：「最近你的時間，好像都被讀書、社團、打工分光了……我們，還要不要繼續走下去？」',
     choices:[
       {t:'提分手，先衝刺考試',s:'課業 +，人際 -多',warn:true,f:()=>{
-          S.inRelationship=false; S.crushCooldown=3; S.coupleFightCount=0; applyEff({study:5,social:-6,energy:-3});
+          S.inRelationship=false; S.crushCooldown=9; S.coupleFightCount=0; applyEff({study:5,social:-6,energy:-3});
           card('bad','分手','你們在校門口站了很久，最後誰也沒有再多說什麼，只是點了點頭。走回家的路上，手機裡那些聊天記錄突然變得很安靜。課業 <b class="up">+5</b>，人際 <b class="dn">-6</b>，精力 <b class="dn">-3</b>。');
           traitCard('single','單身貴族','放下了這段感情，一個人也能把日子過得很好。');
           board(); }},
@@ -811,7 +811,49 @@ function sleepInEvent(){
           board(); }}
     ]};
 }
-const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent,basketballEvent,familyTimeEvent,choresEvent,sleepInEvent];
+function popQuizEvent(){
+  return {id:'popquiz',title:'隨堂測驗',
+    desc:'數學老師突然要隨堂測驗，沒有準備到這單元的你決定：',
+    choices:[
+      {t:'硬著頭皮照寫考卷，不會就用猜的',s:'結果看運氣',main:true,f:()=>{
+          if(chance(50)){ applyEff({study:5,social:3}); card('good','矇對了','沒想到憑著猜題的直覺，會的都寫對，不會的居然也猜對了大半。老師發考卷時特地點名稱讚你「進步很多」，同學們投來驚訝的眼光。課業 <b class="up">+5</b>，人際 <b class="up">+3</b>。'); }
+          else { applyEff({study:-4,energy:3}); card('bad','趴下補眠','寫到一半發現什麼都不會，乾脆直接趴下去補眠，醒來時發現口水沾濕了半張考卷。課業 <b class="dn">-4</b>，精力 <b class="up">+3</b>。'); }
+          board(); }},
+      {t:'舉手哀求請老師改天考',s:'結果難料',f:()=>{
+          if(chance(40)){ applyEff({social:4}); card('good','全班歡呼','同學們一起跟著求情，老師終於心軟，宣布改天再考，全班瞬間歡呼出聲，你也鬆了一大口氣。人際 <b class="up">+4</b>。'); }
+          else { applyEff({social:-3,energy:-3}); card('bad','弄巧成拙','老師覺得你的學習態度散漫，不但照樣考，還當場罰你多寫一份作業。人際 <b class="dn">-3</b>，精力 <b class="dn">-3</b>。'); }
+          board(); }}
+    ]};
+}
+function dozeOffEvent(){
+  return {id:'dozeoff',title:'夢周公',
+    desc:'昨晚不小心看小說看到凌晨3點，現在是早上第一節課，伴隨老師宛如催眠般的語調，儘管已經喝完一杯大冰美，但你的眼皮還是越來越沉重……這時你決定：',
+    choices:[
+      {t:'再撐一下',s:'結果看意志力',main:true,f:()=>{
+          if(chance(50)){ applyEff({study:-2,energy:-4}); card('bad','撐到下課','硬是撐到了下課鐘響，但整堂課老師說的話，一句都沒聽進去。課業 <b class="dn">-2</b>，精力 <b class="dn">-4</b>。'); }
+          else { applyEff({study:-3,energy:5}); card('info','撐不住了','努力撐了一陣子，最後還是敵不過睡意，趴下去睡著了。課業 <b class="dn">-3</b>，精力 <b class="up">+5</b>。'); }
+          board(); }},
+      {t:'直接開睡',s:'結果難料',f:()=>{
+          if(chance(65)){ applyEff({social:3,study:-3}); card('bad','大蜜蜂驚魂','有一隻大蜜蜂突然朝你飛來，你連忙伸手一揮，結果只聽見一聲巨響——睜開眼睛才發現桌上的課本鉛筆盒全掉到地上，還有全班同學的笑聲。人際 <b class="up">+3</b>，課業 <b class="dn">-3</b>。'); }
+          else { applyEff({energy:4,money:-45}); card('good','原來是一場夢','熟悉的旋律傳來，睜開眼睛一看，發現是鬧鐘鈴聲，你還躺在房間床上——原來昨晚看小說看到睡著了，剛剛教室裡的一切都只是一場夢。趕快起床準備去學校，途中為了以防萬一，順便買了一杯大冰美。精力 <b class="up">+4</b>，金錢 <b class="dn">-45</b>。'); }
+          board(); }}
+    ]};
+}
+function hungryEvent(){
+  return {id:'hungry',title:'還沒到中午但是肚子餓',
+    desc:'才第三節課，肚子就不爭氣地叫了出來，鄰座同學忍不住多看了你一眼。距離午休還有一段時間，你決定：',
+    choices:[
+      {t:'偷偷咬一口藏在抽屜裡的餅乾',s:'結果看運氣',main:true,f:()=>{
+          if(chance(50)){ applyEff({social:-3,energy:-2}); card('bad','當場被抓包','老師眼尖發現，把你叫起來罰站，全班哄堂大笑。人際 <b class="dn">-3</b>，精力 <b class="dn">-2</b>。'); }
+          else { applyEff({energy:4,study:2}); card('good','神不知鬼不覺','趁老師轉身寫黑板的空檔，偷偷解決了燃眉之急，精神也跟著回來了。精力 <b class="up">+4</b>，課業 <b class="up">+2</b>。'); }
+          board(); }},
+      {t:'忍耐到下課再說',s:'結果難料',f:()=>{
+          if(chance(55)){ applyEff({energy:4,money:-40}); card('good','衝去合作社','靠意志力撐過去，下課鐘一響立刻衝去合作社，剛好買到最後一份麵包。精力 <b class="up">+4</b>，金錢 <b class="dn">-40</b>。'); }
+          else { applyEff({social:3,energy:2}); card('good','同學遞來一顆糖','肚子叫得太大聲，鄰座同學遞了一顆糖給你，雖然解決不了根本問題，但那份體貼讓你很感動。人際 <b class="up">+3</b>，精力 <b class="up">+2</b>。'); }
+          board(); }}
+    ]};
+}
+const POOL_GENERIC=[reportEvent,drinkEvent,friendFightEvent,phoneEvent,familyEvent,serveEvent,overtimeEvent,tutorEvent,friendPostEvent,giftEvent,basketballEvent,familyTimeEvent,choresEvent,sleepInEvent,popQuizEvent,dozeOffEvent,hungryEvent];
 
 /* 告白：依年級門檻觸發（高一人際>45，高二/高三人際>60），還沒交往的話一個年級只會問一次 */
 function curSem(){ return Math.min(6,Math.max(1,S.examIndex)); }
@@ -942,22 +984,23 @@ function studyMult(){
   return m;
 }
 function decayStats(){
-  /* 靈命越高，其他數值衰退越慢（最多緩解30%） */
+  /* 靈命越高，其他數值衰退越慢（最多緩解30%）
+     現在改成每次段考都衰退一次（一學期3次），單次幅度縮小到約1/3，讓退步更平滑、不會單次跳動太大 */
   const faithRelief = clamp(S.faith,0,100)/100*0.3;
-  S.study=S.study*(1-0.04*(1-faithRelief));
-  S.social=S.social*(1-0.045*(1-faithRelief));
-  S.faith=S.faith*0.955;
-  S.energy=clamp(S.energy+4,0,100); /* 每回合小幅回復，但不夠應付花費，仍需靠「體力」休息 */
+  S.study=S.study*(1-0.026*(1-faithRelief));
+  S.social=S.social*(1-0.03*(1-faithRelief));
+  S.faith=S.faith*0.97;
+  S.energy=clamp(S.energy+1.3,0,100); /* 每次段考小幅回復，但不夠應付花費，仍需靠「體力」休息 */
   /* 人際子數值：緩慢漂移、過低會拖累整體人際 */
-  S.familyScore=clamp(S.familyScore-0.15,0,10);
-  if(S.hasClub) S.clubScore=clamp(S.clubScore-0.4,0,10); /* 半學期沒理社團要看得出明顯下滑 */
-  if(S.hasJob) S.jobScore=clamp(S.jobScore-0.2,0,10);
-  S.serviceScore=clamp(S.serviceScore-0.15,0,10);
-  if(S.inRelationship) S.loveScore=clamp(S.loveScore-0.4,0,10); /* 感情需要持續維繫，不理它會慢慢變淡 */
-  if(S.hasClub && S.clubScore<5) S.social=Math.max(0,S.social-0.3);
-  if(S.familyScore<5) S.social=Math.max(0,S.social-0.3);
-  if(S.inRelationship && S.loveScore<5) S.social=Math.max(0,S.social-0.3);
-  if(S.crushActive) S.loveScore=clamp(S.loveScore+1,0,10); /* 曖昧期自然升溫 */
+  S.familyScore=clamp(S.familyScore-0.05,0,10);
+  if(S.hasClub) S.clubScore=clamp(S.clubScore-0.13,0,10);
+  if(S.hasJob) S.jobScore=clamp(S.jobScore-0.07,0,10);
+  S.serviceScore=clamp(S.serviceScore-0.05,0,10);
+  if(S.inRelationship) S.loveScore=clamp(S.loveScore-0.13,0,10); /* 感情需要持續維繫，不理它會慢慢變淡 */
+  if(S.hasClub && S.clubScore<5) S.social=Math.max(0,S.social-0.1);
+  if(S.familyScore<5) S.social=Math.max(0,S.social-0.1);
+  if(S.inRelationship && S.loveScore<5) S.social=Math.max(0,S.social-0.1);
+  if(S.crushActive) S.loveScore=clamp(S.loveScore+0.33,0,10); /* 曖昧期自然升溫 */
   if(S.crushCooldown>0) S.crushCooldown--; /* 分手後的緩衝期，短時間內不會馬上遇到新的曖昧對象 */
 }
 function allocPanel(pool,dice,cont){
@@ -1162,17 +1205,18 @@ function summerBurnoutEvent(cont){
 
 /* ===== 段考結算 ===== */
 function applyAllocationEffects(val){
-  const jobRate = S.jobTier>=2?480:S.jobTier===1?370:280;
-  applyEff({study:val.study*2.6*studyMult(), social:val.club*2.0+val.friend*2.3, faith:val.church*2.6, money:val.job*jobRate, energy:val.rest*8});
+  /* 一學期只配一次點、單次投入量變大，係數需要壓得比單純70%更低，才不會兩三個學期就把數值衝頂 */
+  const jobRate = S.jobTier>=2?336:S.jobTier===1?259:196;
+  applyEff({study:val.study*1.0*studyMult(), social:val.club*0.77+val.friend*0.885, faith:val.church*1.0, money:val.job*jobRate, energy:val.rest*5.6});
   S.cumJobPoints+=val.job;
-  S.clubScore=clamp(S.clubScore+val.club*1.2,0,10);
-  S.jobScore=clamp(S.jobScore+val.job*1.2,0,10);
-  S.serviceScore=clamp(S.serviceScore+val.church*1.2,0,10);
+  S.clubScore=clamp(S.clubScore+val.club*0.46,0,10);
+  S.jobScore=clamp(S.jobScore+val.job*0.46,0,10);
+  S.serviceScore=clamp(S.serviceScore+val.church*0.46,0,10);
   if(S.inRelationship){
-    if(val.date>0){ S.loveScore=clamp(S.loveScore+val.date*2.4,0,10); applyEff({social:val.date*0.5}); }
+    if(val.date>0){ S.loveScore=clamp(S.loveScore+val.date*0.92,0,10); applyEff({social:val.date*0.5}); }
     else { S.loveScore=clamp(S.loveScore-3,0,10); }
   } else if(S.crushActive && val.date>0){
-    S.loveScore=clamp(S.loveScore+val.date*2.4,0,10); /* 曖昧期主動相處，加速升溫 */
+    S.loveScore=clamp(S.loveScore+val.date*0.92,0,10); /* 曖昧期主動相處，加速升溫 */
   }
   /* 精力消耗維持不變：配點量已經減少，總消耗自然跟著降 */
   const spentEnergy=(val.study*3+val.club*2.5+val.friend*1.5+(val.date||0)*1.5+val.job*3+val.church*1)*0.7;
@@ -1188,7 +1232,9 @@ function scoreCard(label,score){
   card(tone,label+'：'+score+' 分（班排 '+rank+' / 40）',`${comment}<br><span style="color:var(--dim);font-size:12px">課業 ${Math.round(S.study)}／人際 ${Math.round(S.social)}／靈命 ${Math.round(S.faith)}／精力 ${Math.round(S.energy)}</span>`);
 }
 function popScore(label,cont,double){
-  /* 不重新分配時間，直接依當下課業狀態跑一次公式；期末成績雙跑取平均，緩和單次隨機的震盪 */
+  /* 每次段考都先跑一次衰退（幅度已縮小到約1/3），再依當下課業狀態算分；期末成績雙跑取平均，緩和單次隨機的震盪 */
+  decayStats();
+  board();
   if(S.study<45)S.lowStudyCheckpoints++;
   const rollOnce=()=>{ const fatigue=S.energy<25?(25-S.energy)*0.5:0; return clamp(Math.round(S.study*0.85+18+N0(6)-fatigue),0,100); };
   const score = double ? Math.round((rollOnce()+rollOnce())/2) : rollOnce();
@@ -1291,7 +1337,6 @@ function runSingleEvent(semIdx,cont){
 }
 function welcomeThenAlloc(semIdx,cont){
   S.examIndex++;
-  decayStats();
   board();
   const roll=rollPool();
   let finalPool=roll.pool;
@@ -1668,8 +1713,11 @@ function endGame(){
   let label,scaled,full,tier;
   if(S.starTaken){
     label='繁星推薦結果';
-    scaled=48; full=60;
-    tier={t:'以繁星資格錄取優質國立大學／頂尖私立大學',d:'穩紮穩打的高一高二成績，讓你在繁星推薦階段就順利錄取心目中理想的學校，省去了學測的煎熬。'};
+    const early=S.scores.slice(0,12);
+    const avgEarly = early.length ? early.reduce((a,b)=>a+b,0)/early.length : 70;
+    scaled=clamp(Math.round(36+(avgEarly-70)*0.75+N0(4)),25,60);
+    full=60;
+    tier = GEN_60_TIERS.find(t=>scaled>=t.min) || GEN_60_TIERS[GEN_60_TIERS.length-1];
   } else if(S.track==='gen'){
     if(S.examPath==='fenke'){
       const raw2=clamp(Math.round(avgStudy*0.3+S.study*0.5+N0(10)),0,100);
